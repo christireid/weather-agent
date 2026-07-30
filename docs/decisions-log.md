@@ -59,3 +59,28 @@ seeds 1–200: 1 flat / 39 calm-drift / 120 one-storm / 40 choppy.
 - 66 tests passing (minimum 45), three consecutive identical green runs.
 - Mutation spot-check: inverting the volatility-clustering feedback sign
   (`+B·shock²` → `−B·shock²`) failed 33/66 tests; reverted, suite green again.
+
+## 2026-07-30 — Stage 2 (Loop B)
+
+### D-006 · Cloud-bank texturing of the density channel
+
+The volume→density mapping is rendered two ways at once: a per-particle
+visibility gate (calm regions genuinely thin out) and a slow noise mask that
+textures the surviving density into banks and voids. Both modulate the SAME
+data channel (volume); the noise adds no independent meaning, exactly as a
+brush texture adds no data to a bar chart. Recorded here because the metaphor
+contract (§2.3) demands every visual effect name its channel.
+
+### D-007 · Linear pipeline, sRGB tokens
+
+All palette tokens are authored as sRGB (as in §6.2); every shader that writes
+them converts via `srgb2lin` because the render pipeline is linear with an
+sRGB output transform. The ramp LUT is tagged `SRGBColorSpace` so texture
+sampling converts automatically. (Loop B pass 4 root cause.)
+
+### D-008 · Small-viewport density compensation
+
+Particle size and alpha scale with `√(viewportArea / 1600×1000)` clamped to
+[0.5, 1.25], so the same particle budget reads as the same weather on a phone
+instead of fog. The compensation is resolution-driven, not data-driven — it
+carries no market meaning.

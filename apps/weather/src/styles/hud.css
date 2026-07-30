@@ -192,6 +192,9 @@
   top: 72px;
   right: var(--s5);
   bottom: 110px;
+  /* stays composited even while parked offscreen, so opening it never pays
+     a first-raster stall (Loop E software-compositor finding) */
+  will-change: transform;
   width: min(340px, calc(100vw - 32px));
   z-index: 25;
   background: rgb(11 12 20 / 82%);
@@ -360,6 +363,15 @@
 .help-sheet dd { margin: 0; color: var(--paper-2); }
 .help-sheet p { font-size: 12px; color: var(--paper-2); line-height: 1.5; }
 .help-sheet code { color: var(--paper); }
+
+/* --- Software-renderer profile ------------------------------------------- */
+
+.software-gl .focus-panel,
+.software-gl .review-panel,
+.software-gl .help-sheet {
+  backdrop-filter: none;
+  background: rgb(13 14 24 / 97%);
+}
 
 /* --- Skip link ----------------------------------------------------------- */
 

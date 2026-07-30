@@ -12,7 +12,7 @@ const MIN_GAP_MS = 4000;
 
 export function AriaLive(): React.JSX.Element {
   const seed = useWeather((s) => s.seed);
-  const minute = useWeather((s) => s.minute);
+  const minute = useWeather((s) => Math.round(s.minute));
   const [message, setMessage] = useState('');
   const lastKey = useRef('');
   const lastAt = useRef(0);

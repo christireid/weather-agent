@@ -16,7 +16,7 @@ import { titleFrame } from '../acts/titleTimeline';
 import { setViewTarget, snapView, tickView } from './camera';
 import { buildLayout, pointsToUniform } from './layout';
 import { rampTextureData } from './ramp';
-import { ParticleSim, TIER_SIDE } from './particles/sim';
+import { ParticleSim, SOFTWARE_FLOOR_SIDE, TIER_SIDE } from './particles/sim';
 import { RENDER_FRAG, RENDER_VERT } from './particles/shaders';
 import { AirField } from './airField';
 import { airRegistry } from './airRegistry';
@@ -30,6 +30,9 @@ export function Particles(): React.JSX.Element {
   const gl = useThree((s) => s.gl);
   const seed = useWeather((s) => s.seed);
   const tier = useWeather((s) => s.tier);
+  const softwareGL = useWeather((s) => s.softwareGL);
+  const captureMode = useWeather((s) => s.captureMode);
+  const softwareFloor = softwareGL && tier === 'low' && !captureMode;
 
   const layout = useMemo(() => buildLayout(seed), [seed]);
   const points = useMemo(() => pointsToUniform(layout), [layout]);
@@ -43,7 +46,7 @@ export function Particles(): React.JSX.Element {
     return tex;
   }, []);
 
-  const side = TIER_SIDE[tier];
+  const side = softwareFloor ? SOFTWARE_FLOOR_SIDE : TIER_SIDE[tier];
   const sim = useMemo(() => new ParticleSim(side, points), [side, points]);
   useEffect(() => () => sim.dispose(), [sim]);
 
@@ -91,6 +94,7 @@ export function Particles(): React.JSX.Element {
           uPoints: { value: Array.from({ length: 11 }, (_, i) => new THREE.Vector2(points[i * 2] ?? 0, points[i * 2 + 1] ?? 0)) },
           uView: { value: new THREE.Vector3(1, 0.5, 0.5) },
           uPointScale: { value: 3 },
+          uZoomSizeCap: { value: 10 },
           uAlphaScale: { value: 1 },
           uFlowTime: { value: 0 },
           uTitleGlow: { value: 0 },
@@ -122,6 +126,7 @@ export function Particles(): React.JSX.Element {
   }, [side]);
 
   const lastGen = useRef(-1);
+  const lastSim = useRef<ParticleSim | null>(null);
   const lastMs = useRef(0);
   const lastMixMs = useRef(0);
   const lastReducedMinute = useRef(-1);
@@ -143,7 +148,10 @@ export function Particles(): React.JSX.Element {
     const ru = material.uniforms;
     const su = sim.stepMaterial.uniforms;
     const B = ru.uSectorB?.value as THREE.Vector4[];
-    if (Math.abs(s.minute - lastAirMinute.current) >= 0.2 || lastAirMinute.current < 0) {
+    // Air-bake cadence: ~5 bakes/simulated-minute normally; 1/minute at the
+    // software floor (uploads are the scarce resource there).
+    const airCadence = softwareFloor ? 1.0 : 0.35;
+    if (Math.abs(s.minute - lastAirMinute.current) >= airCadence || lastAirMinute.current < 0) {
       lastAirMinute.current = s.minute;
       air.update(ch);
     }
@@ -228,12 +236,20 @@ export function Particles(): React.JSX.Element {
     if (ru.uPointScale) {
       // Compensate small viewports: same particle count into fewer pixels
       // would fog the frame (Loop B mobile finding), so size and alpha both
-      // shrink with screen area.
+      // shrink with screen area. The software floor's fewer particles get a
+      // size/alpha boost so the sky still reads as weather.
       const area = state.size.width * state.size.height;
       const screenFactor = Math.min(1.25, Math.max(0.5, Math.sqrt(area / (1600 * 1000))));
-      ru.uPointScale.value = (s.tier === 'high' ? 4.4 : 5.6) * state.viewport.dpr * screenFactor;
-      if (ru.uAlphaScale) ru.uAlphaScale.value = Math.min(1, 0.35 + 0.65 * screenFactor);
+      const floorBoost = softwareFloor ? 1.9 : 1;
+      ru.uPointScale.value =
+        (s.tier === 'high' ? 4.4 : 5.6) * state.viewport.dpr * screenFactor * floorBoost;
+      if (ru.uAlphaScale) {
+        ru.uAlphaScale.value = Math.min(1, 0.35 + 0.65 * screenFactor) * (softwareFloor ? 3.4 : 1);
+      }
     }
+    if (su.uCheapNoise) su.uCheapNoise.value = softwareFloor ? 1 : 0;
+    // Zoomed sprites quadruple fill; the software floor caps their growth.
+    if (ru.uZoomSizeCap) ru.uZoomSizeCap.value = softwareFloor ? 1.3 : 10;
 
     // Fully settled in Boring Mode → the DOM owns the view; skip sim work.
     if (s.mode === 'boring' && boring.mix >= 1) {
@@ -241,13 +257,16 @@ export function Particles(): React.JSX.Element {
       return;
     }
 
-    // Re-init on scrub/jump/seed change (deterministic sky per §3.2) — and in
-    // reduced motion, on every displayed minute (static stills, no advection).
+    // Re-init on scrub/jump/seed change (deterministic sky per §3.2), on a
+    // fresh sim instance (tier / software-floor swap — its textures are
+    // zeros), and in reduced motion on every displayed minute.
     const wantReinit =
       s.scrubGeneration !== lastGen.current ||
+      sim !== lastSim.current ||
       (s.reducedMotion && Math.round(s.minute) !== lastReducedMinute.current);
     if (wantReinit) {
-      const firstInit = lastGen.current === -1;
+      const firstInit = lastSim.current === null;
+      lastSim.current = sim;
       lastGen.current = s.scrubGeneration;
       lastReducedMinute.current = Math.round(s.minute);
       sim.reinit(gl, s.seed, s.minute, flowTime);
@@ -263,7 +282,7 @@ export function Particles(): React.JSX.Element {
       // there and sub-frame smoothness is already display-bound.
       const softwareFloor = s.softwareGL && s.tier === 'low';
       const H = 1 / 60;
-      const minStep = softwareFloor ? 1 / 32 : H;
+      const minStep = softwareFloor ? 1 / 20 : H;
       const now = virtualNow();
       const acc0 = (now - lastMs.current) / 1000;
       if (acc0 >= minStep) {

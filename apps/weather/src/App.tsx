@@ -30,7 +30,7 @@ const hasWebgl = typeof window !== 'undefined' && webglAvailable();
 
 export function App(): React.JSX.Element {
   const seed = useWeather((s) => s.seed);
-  const minute = useWeather((s) => s.minute);
+  const minute = useWeather((s) => Math.round(s.minute));
   const mode = useWeather((s) => s.mode);
   const focus = useWeather((s) => s.focus);
   const act = useWeather((s) => s.act);
@@ -39,10 +39,21 @@ export function App(): React.JSX.Element {
   // (heatmap fades out, atmosphere un-files) has a surface to run on.
   const [everBoring, setEverBoring] = useState(mode === 'boring');
 
+  // URL sync happens on user actions (scrub release, toggles, seed change) —
+  // never on the auto-advancing clock: history.replaceState can stall a
+  // frame, and free playback must stay allocation- and jank-free (Loop E).
   useEffect(() => {
     if (mode === 'boring') setEverBoring(true);
     syncUrl();
-  }, [seed, minute, mode, focus, tierPinned]);
+  }, [seed, mode, focus, tierPinned]);
+
+  // Software compositors pay dearly for backdrop-filter surfaces (Loop E:
+  // a 216ms allocation stall + per-frame blur). The panels drop translucency
+  // there via this class.
+  const softwareGL = useWeather((s) => s.softwareGL);
+  useEffect(() => {
+    document.body.classList.toggle('software-gl', softwareGL);
+  }, [softwareGL]);
 
   const day = dayFor(seed);
   const label = canvasLabel(day, Math.round(minute));

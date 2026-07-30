@@ -14,7 +14,7 @@ export function SectorOverlay(): React.JSX.Element | null {
   const seed = useWeather((s) => s.seed);
   const act = useWeather((s) => s.act);
   const mode = useWeather((s) => s.mode);
-  const minute = useWeather((s) => s.minute);
+  const minute = useWeather((s) => Math.round(s.minute));
   const st = useWeather.getState();
   const day = dayFor(seed);
 

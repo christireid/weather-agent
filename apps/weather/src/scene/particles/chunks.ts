@@ -86,10 +86,15 @@ float vnoise(vec2 p) {
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
-// Two octaves of drifting noise as the stream function.
+// Two octaves of drifting noise as the stream function. uCheapNoise drops
+// the second octave on software rasterizers' live floor (D-011) — broader
+// eddies, half the ψ cost.
+uniform float uCheapNoise;
 float psi(vec2 p, float t) {
   float n = vnoise(p + vec2(t * 0.35, t * 0.11));
-  n += 0.5 * vnoise(p * 2.3 - vec2(t * 0.21, t * 0.33));
+  if (uCheapNoise < 0.5) {
+    n += 0.5 * vnoise(p * 2.3 - vec2(t * 0.21, t * 0.33));
+  }
   return n;
 }
 

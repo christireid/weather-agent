@@ -166,6 +166,7 @@ uniform float uScrubBlend;        // 1 → still showing the old sky, 0 → arri
 uniform vec4 uSectorB[11];        // spike, hover, focusDim, 0
 uniform vec3 uView;        // zoom, cx, cy
 uniform float uPointScale; // device pixels at zoom 1
+uniform float uZoomSizeCap; // limits zoom-driven sprite growth (software floor fill budget)
 uniform float uAlphaScale; // small-viewport compensation (fewer pixels per particle)
 uniform float uFlowTime;
 uniform float uTitleGlow;  // restrained lift while the wordmark holds
@@ -203,7 +204,7 @@ void main() {
   // Volume is density: size and opacity both breathe with it. Depth spreads
   // the layers apart — far grains are dust, near ones are soft luminous orbs.
   float depth = data.z;
-  float size = uPointScale * (0.55 + 0.75 * volume) * (0.30 + 1.30 * depth) * uView.x;
+  float size = uPointScale * (0.55 + 0.75 * volume) * (0.30 + 1.30 * depth) * min(uView.x, uZoomSizeCap);
   vAlpha = (0.115 + 0.135 * volume) * (0.22 + 0.78 * depth);
 
   // Density IS volume (§2.3): a per-particle gate thins calm regions to real

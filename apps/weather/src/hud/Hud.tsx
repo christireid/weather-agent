@@ -10,7 +10,7 @@ import { rampCss, returnToT } from '../scene/ramp';
 export function Hud(): React.JSX.Element | null {
   const act = useWeather((s) => s.act);
   const seed = useWeather((s) => s.seed);
-  const minute = useWeather((s) => s.minute);
+  const minute = useWeather((s) => Math.round(s.minute));
   const paused = useWeather((s) => s.paused);
   const tier = useWeather((s) => s.tier);
   const mode = useWeather((s) => s.mode);

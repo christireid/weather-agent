@@ -35,7 +35,9 @@ export function useSpringValue(target: number, opts?: { stiffness?: number; damp
         setValue(s.x);
         return;
       }
-      setValue(s.x);
+      // Quantize the published value so React re-renders only on visible
+      // movement, not every physics tick (frame-loop hygiene).
+      setValue(Math.round(s.x * 16) / 16);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);

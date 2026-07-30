@@ -45,7 +45,7 @@ export function cellChipStyle(t: number): { background: string; color: string } 
 
 export function Boring(): React.JSX.Element {
   const seed = useWeather((s) => s.seed);
-  const minute = useWeather((s) => s.minute);
+  const minute = useWeather((s) => Math.round(s.minute));
   const st = useWeather.getState();
   const day = dayFor(seed);
   const gridRef = useRef<HTMLDivElement>(null);

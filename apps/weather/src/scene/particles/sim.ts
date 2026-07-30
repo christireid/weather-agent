@@ -15,6 +15,8 @@ export const WARMUP_DT = 1 / 30;
 
 /** Particle-texture sides per tier: 448² ≈ 200k (high), 245² ≈ 60k (low). */
 export const TIER_SIDE = { high: 448, low: 245 } as const;
+/** Live software-rasterizer floor: 88² ≈ 7.7k (D-011). */
+export const SOFTWARE_FLOOR_SIDE = 88;
 
 export class ParticleSim {
   readonly side: number;
@@ -53,6 +55,7 @@ export class ParticleSim {
         uPoints: { value: pointsToVec2(points) },
         uDt: { value: 0 },
         uFlowTime: { value: 0 },
+        uCheapNoise: { value: 0 },
         uGlyphTargets: { value: null },
         uTitleMix: { value: 0 },
         uTitleShimmer: { value: 0 },

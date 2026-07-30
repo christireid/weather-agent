@@ -14,17 +14,18 @@ export default function Field(): React.JSX.Element {
   const dprScale = useWeather((s) => s.dprScale);
   const tier = useWeather((s) => s.tier);
   const softwareGL = useWeather((s) => s.softwareGL);
-  // Software rasterizers get the adaptive ladder's floor as their low tier:
-  // half resolution and (in Effects) no post chain — the ladder would land
-  // there anyway; pinning ?tier=low starts there (decision D-011).
-  const softwareFloor = softwareGL && tier === 'low';
+  const captureMode = useWeather((s) => s.captureMode);
+  // Software rasterizers get the adaptive ladder's floor as their LIVE low
+  // tier: reduced resolution, fewer particles, no post (D-011). Captures are
+  // clock-stepped, not real-time, so they keep full low-tier quality.
+  const softwareFloor = softwareGL && tier === 'low' && !captureMode;
   const dpr = Math.max(
-    0.35,
+    0.3,
     Math.min(
       2,
       (typeof window === 'undefined' ? 1 : window.devicePixelRatio) *
         dprScale *
-        (softwareFloor ? 0.5 : 1),
+        (softwareFloor ? 0.28 : 1),
     ),
   );
   return (

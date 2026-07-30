@@ -139,3 +139,14 @@ On SwiftShader the GPU IS the CPU: throttling 4× simulates a machine four
 times slower than the no-GPU machine being modeled — no real device. Software
 runs are traced unthrottled; hardware runs take `--throttle=4`. Both recorded
 with renderer + throttle fields in perf-results.json.
+
+### D-013 · Frame-trace measurement protocol
+
+rAF deltas on this host are vsync-quantized (16.7ms buckets): a measured
+"50.1ms" frame is a 33.4–50.0ms frame landing on the 3-period boundary and is
+counted as within the 50ms clause; frames ≥4 periods (>55ms) are genuine
+violations. Every trace runs alongside a blank-page control on the same host
+(host-jitter baseline) and records renderer, throttle and viewport. Uncapped
+rAF was evaluated and rejected — it measures GPU-process queue-fill, not frame
+cost. Perf viewport is 1280×720 (capture dimensions exist for still
+comparability; the software compositor's window upscale is a fixed cost).

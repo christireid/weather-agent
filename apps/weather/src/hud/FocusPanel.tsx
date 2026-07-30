@@ -3,7 +3,7 @@
  * volume, and five constituent sparklines. Slides in on the panel spring
  * (stiffness 220, damping 28); Escape or click-out releases.
  */
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { MINUTES } from '@market-weather/market';
 import { dayFor, useWeather } from '../state/store';
 import { rampCss, returnToT } from '../scene/ramp';
@@ -29,7 +29,7 @@ function sparkPath(path: number[], upTo: number): string {
 export function FocusPanel(): React.JSX.Element | null {
   const seed = useWeather((s) => s.seed);
   const focus = useWeather((s) => s.focus);
-  const minute = useWeather((s) => s.minute);
+  const minute = useWeather((s) => Math.round(s.minute));
   const setFocus = useWeather((s) => s.setFocus);
   const day = dayFor(seed);
   const idx = focus ? day.sectors.findIndex((x) => x.slug === focus) : -1;
@@ -38,14 +38,20 @@ export function FocusPanel(): React.JSX.Element | null {
   const slide = useSpringValue(open ? 0 : 1);
   const t = Math.round(minute);
 
-  const paths = useMemo(() => {
-    if (idx < 0) return [];
-    return Array.from({ length: 5 }, (_, k) => day.tickerPath(idx, k));
-  }, [day, idx]);
+  // Stays mounted once created (hidden + inert when closed): the first panel
+  // mount cost ~200ms on software compositors and landed mid-flight (Loop E).
+  // Paying it at load keeps the focus interaction spotless.
+  const lastIdx = useRef(0);
+  if (idx >= 0) lastIdx.current = idx;
+  const displayIdx = idx >= 0 ? idx : lastIdx.current;
 
-  if (!open && slide > 0.995) return null;
-  const meta = day.sectors[idx];
-  const sec = day.at(t).sectors[idx];
+  const paths = useMemo(() => {
+    return Array.from({ length: 5 }, (_, k) => day.tickerPath(displayIdx, k));
+  }, [day, displayIdx]);
+
+  const hidden = !open && slide > 0.995;
+  const meta = day.sectors[displayIdx];
+  const sec = day.at(t).sectors[displayIdx];
   if (!meta || !sec) return null;
 
   const pct = (x: number): string => `${x >= 0 ? '+' : '−'}${Math.abs(x * 100).toFixed(2)}%`;
@@ -55,6 +61,7 @@ export function FocusPanel(): React.JSX.Element | null {
     <aside
       className="focus-panel"
       style={{ transform: `translateX(${(slide * 108).toFixed(2)}%)` }}
+      inert={hidden}
       aria-label={`${meta.name} sector detail`}
     >
       <header>

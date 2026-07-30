@@ -62,6 +62,12 @@ function buildStoneGeometry(day: MarketDay): THREE.BufferGeometry {
     }
   }
   base.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  // Per-facet phase for the ember shimmer (custom shader injection below).
+  const facetIds = new Float32Array(pos.count);
+  for (let f = 0; f < faceCount; f++) {
+    for (let v = 0; v < 3; v++) facetIds[f * 3 + v] = f / faceCount;
+  }
+  base.setAttribute('aFacet', new THREE.BufferAttribute(facetIds, 1));
   base.computeVertexNormals();
   return base;
 }
@@ -84,7 +90,7 @@ export function DayStone(): React.JSX.Element | null {
   const material = useMemo(() => {
     // Stormy days cut rougher stones (classifier's absolute vol reference).
     const peak = Math.min(1.2, classifyDay(day).peakVol);
-    return new THREE.MeshStandardMaterial({
+    const mat = new THREE.MeshStandardMaterial({
       vertexColors: true,
       flatShading: true,
       metalness: 0.22,
@@ -92,12 +98,55 @@ export function DayStone(): React.JSX.Element | null {
       emissive: new THREE.Color('#11131F'),
       emissiveIntensity: 0.14,
     });
+    // Shader extension (onBeforeCompile): keep the PBR base, inject two
+    // authored terms —
+    //   facet ember : each facet's ramp color smolders from within, scaled by
+    //                 the day's realized vol (stormy stones smolder harder;
+    //                 same channels as the facet itself, D-016)
+    //   fresnel rim : paper-tinted silhouette catch-light (presentation
+    //                 lighting, like the rim lamp beside it)
+    // The shimmer runs on the virtual clock and freezes under reduced motion.
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = { value: 7 };
+      shader.uniforms.uGlow = { value: 0.2 + 0.35 * Math.min(1, peak) };
+      shader.uniforms.uRimColor = {
+        value: new THREE.Color('#F2EEE4').multiplyScalar(0.28),
+      };
+      shader.vertexShader = shader.vertexShader
+        .replace(
+          '#include <common>',
+          '#include <common>\nattribute float aFacet;\nvarying float vFacet;',
+        )
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFacet = aFacet;');
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          '#include <common>\nuniform float uTime;\nuniform float uGlow;\nuniform vec3 uRimColor;\nvarying float vFacet;',
+        )
+        .replace(
+          '#include <emissivemap_fragment>',
+          `#include <emissivemap_fragment>
+  // facet ember — the day glowing inside its own stone
+  float shimmer = 0.78 + 0.22 * sin(uTime * 0.9 + vFacet * 41.0);
+  totalEmissiveRadiance += pow(vColor.rgb, vec3(1.4)) * uGlow * shimmer;
+  // fresnel rim — silhouette catch-light in paper
+  float fres = pow(1.0 - saturate(dot(normalize(vViewPosition), normal)), 3.0);
+  totalEmissiveRadiance += uRimColor * fres;`,
+        );
+      mat.userData.shader = shader;
+    };
+    return mat;
   }, [day]);
   useEffect(() => () => material.dispose(), [material]);
 
   useFrame(({ scene }) => {
     const stone = scene.getObjectByName('day-stone');
     if (!stone) return;
+    const shader = (material.userData as { shader?: { uniforms: Record<string, { value: number }> } }).shader;
+    if (shader?.uniforms.uTime) {
+      // Frozen pose under reduced motion — the ember holds its breath too.
+      shader.uniforms.uTime.value = reducedMotion ? 7 : virtualNow() / 1000;
+    }
     if (reducedMotion) {
       stone.rotation.set(-0.14, 0.65, 0.05);
       stone.position.set(basePos[0], basePos[1], basePos[2]);
@@ -116,8 +165,8 @@ export function DayStone(): React.JSX.Element | null {
   return (
     <group>
       {/* Lights live with the stone so the field pays nothing for them. */}
-      <hemisphereLight args={['#F2EEE4', '#0B0C14', 0.55]} />
-      <directionalLight position={[3.4, 4.2, 4.8]} intensity={1.35} color="#FFF4E2" />
+      <hemisphereLight args={["#F2EEE4", "#0B0C14", 0.35]} />
+      <directionalLight position={[3.4, 4.2, 4.8]} intensity={0.95} color="#FFF4E2" />
       <directionalLight position={[-4.2, 1.2, -2.8]} intensity={1.1} color="#7A86E8" />
       <mesh
         name="day-stone"

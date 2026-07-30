@@ -175,3 +175,15 @@ mount only with the stone so the field pays nothing. First iteration
 shards — reduced to ±0.08 with a 6% facet inset so the mineral reads whole
 with luminous crack lines. A different stone for every seed; the summary
 panel beside it carries the exact figures.
+
+### D-016 · Stone shader extension (onBeforeCompile)
+
+The day stone keeps its PBR base but injects two authored terms into
+MeshStandardMaterial via onBeforeCompile: a *facet ember* — each facet's ramp
+color added as emissive radiance (pow 1.4 saturation), scaled by the day's
+realized vol and modulated by a slow per-facet shimmer on the virtual clock —
+and a paper-tinted *fresnel rim* at the silhouette. Channels: ember color =
+the facet's own return color; ember strength = day vol (stormy stones smolder
+harder); rim = presentation lighting. Shimmer freezes under reduced motion.
+Diffuse lighting was rebalanced downward so the internal glow, not the lamps,
+carries the color.

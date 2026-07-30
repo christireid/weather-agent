@@ -159,3 +159,19 @@ a restatement of existing channels — direction/length are momentum and
 volatility made visible; the head/tail shading makes rising vs falling legible
 in a paused frame, strengthening §2.3 rather than adding a channel. Strokes
 damp to grains inside authored formations (title glyphs, boring grid).
+
+### D-015 · The day stone (Act IV)
+
+The review act gains one strong 3D object: a flat-shaded displaced icosahedron
+("day stone") whose 80 facets map to the 11 sectors — facet color is that
+sector's closing return through the shared OKLab ramp, facet displacement is
+hairline cleavage proportional to the same return (winners proud, losers cut
+deep), and surface roughness follows the day's realized vol against the
+canonical reference (stormy days cut rougher stones). Rotation/bob are
+presentation transforms on the virtual clock, stilled under reduced motion.
+PBR material, perspective camera, key + hemisphere + rim lights; the lights
+mount only with the stone so the field pays nothing. First iteration
+(face-normal displacement ±0.3) shattered the silhouette into floating
+shards — reduced to ±0.08 with a 6% facet inset so the mineral reads whole
+with luminous crack lines. A different stone for every seed; the summary
+panel beside it carries the exact figures.

@@ -5,6 +5,7 @@
 import { Canvas } from '@react-three/fiber';
 import { Sky } from './Sky';
 import { Particles } from './Particles';
+import { DayStone } from './DayStone';
 import { Effects } from './Effects';
 import { Quality } from './Quality';
 import { CaptureBridge } from '../capture/CaptureBridge';
@@ -55,6 +56,7 @@ export default function Field(): React.JSX.Element {
     >
       <Sky />
       <Particles />
+      <DayStone />
       <Effects />
       <Quality />
       <CaptureBridge />

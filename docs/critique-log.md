@@ -121,3 +121,13 @@ honest voids — and the calm morning reads as slow drift. The picture has
 composition-scale structure that is entirely advected data. Verified: title
 glyphs and boring-grid formations damp strokes back to crisp grains
 (uStreakDamp), so choreography is unharmed.
+
+### Pass 12 — the day stone (Act IV object moment)
+
+Added the review act's single strong 3D object (D-015). Pass 12a: face-normal
+displacement at ±0.3 tore the icosahedron into floating shards — debris, not
+a stone. Pass 12b: displacement reduced to hairline cleavage (±0.08) with a 6%
+facet inset — closed silhouette, crack lines catching the violet rim light,
+amber winner-facets against the neutral flats of a near-flat close. Desktop:
+stone left, summary right; narrow screens float it above the panel. Verified
+across tiers/sizes; smoke and axe re-run green (×2).

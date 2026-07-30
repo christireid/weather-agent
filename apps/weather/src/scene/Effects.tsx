@@ -13,7 +13,25 @@ import { useWeather } from '../state/store';
 
 export function Effects(): React.JSX.Element | null {
   const postEnabled = useWeather((s) => s.postEnabled);
+  const reducedMotion = useWeather((s) => s.reducedMotion);
+  const tier = useWeather((s) => s.tier);
+  const softwareGL = useWeather((s) => s.softwareGL);
   if (!postEnabled) return null;
+  // Software rasterizer at low tier = the adaptive ladder's floor (D-011):
+  // the post chain is the single biggest software-rendering cost.
+  if (softwareGL && tier === 'low') return null;
+  // The grain shader animates per frame; under reduced motion the frame must
+  // be perfectly still, so that composer variant omits it (banding risk is
+  // acceptable on a static image).
+  if (reducedMotion) {
+    return (
+      <EffectComposer multisampling={0}>
+        <Bloom intensity={0.55} luminanceThreshold={0.72} luminanceSmoothing={0.18} mipmapBlur />
+        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        <Vignette eskil={false} offset={0.18} darkness={0.42} />
+      </EffectComposer>
+    );
+  }
   return (
     <EffectComposer multisampling={0}>
       <Bloom intensity={0.55} luminanceThreshold={0.72} luminanceSmoothing={0.18} mipmapBlur />

@@ -11,15 +11,36 @@
 import { useMemo, useRef } from 'react';
 import { clockLabel, MINUTES } from '@market-weather/market';
 import { dayFor, useWeather } from '../state/store';
-import { contrastRatio, rampCss, rampLuminance, returnToT } from '../scene/ramp';
+import { contrastRatio, rampCss, rampLuminance, returnToT, sampleRamp } from '../scene/ramp';
 
 const BUCKETS = 78; // 390 minutes / 5
 
-/** §6.2 luminance switch: sky-dark text on warm/neutral cells, paper on deep cool. */
-export function cellTextColor(t: number): string {
+const SKY_DARK_L = 0.0038; // #0B0C14
+const PAPER_L = 0.856; // #F2EEE4
+
+/**
+ * §6.2 luminance switch, computed not eyeballed: sky-dark text on warm and
+ * neutral cells, paper on the deep cool stops. Mid-cool ramp luminances
+ * (~0.17) fail 4.5:1 against BOTH inks, so when neither passes the chip's
+ * background is darkened toward sky just enough for paper to clear 4.5
+ * (decision D-010 — hue identity kept, AA guaranteed).
+ */
+export function cellChipStyle(t: number): { background: string; color: string } {
   const cellL = rampLuminance(t);
-  const skyDarkL = 0.0035; // #0B0C14
-  return contrastRatio(cellL, skyDarkL) >= 4.5 ? '#0B0C14' : '#F2EEE4';
+  if (contrastRatio(cellL, SKY_DARK_L) >= 4.5) {
+    return { background: rampCss(t), color: '#0B0C14' };
+  }
+  if (contrastRatio(PAPER_L, cellL) >= 4.5) {
+    return { background: rampCss(t), color: '#F2EEE4' };
+  }
+  // Darken toward sky until paper passes: solve (Lp+0.05)/(L+0.05) = 4.6.
+  const targetL = (PAPER_L + 0.05) / 4.6 - 0.05;
+  const k = Math.max(0, Math.min(1, (cellL - targetL) / Math.max(1e-6, cellL - SKY_DARK_L)));
+  const [r, g, b] = sampleRamp(t);
+  const sky = [0.043, 0.047, 0.078];
+  const mix = (a: number, c: number): number => Math.round((a + (c - a) * k) * 255);
+  const bg = `rgb(${mix(r, sky[0] ?? 0)} ${mix(g, sky[1] ?? 0)} ${mix(b, sky[2] ?? 0)})`;
+  return { background: bg, color: '#F2EEE4' };
 }
 
 export function Boring(): React.JSX.Element {
@@ -118,14 +139,16 @@ export function Boring(): React.JSX.Element {
           const rowCells = cells[s] ?? [];
           return (
             <div role="row" className="boring-row" key={meta.slug}>
-              <button
-                className="boring-rowlabel"
-                onClick={() => st.setFocus(meta.slug)}
-                aria-label={`Open ${meta.name} sector panel`}
-              >
-                {meta.name}
-              </button>
-              <div className="boring-cells">
+              <span role="rowheader" className="boring-rowheader">
+                <button
+                  className="boring-rowlabel"
+                  onClick={() => st.setFocus(meta.slug)}
+                  aria-label={`Open ${meta.name} sector panel`}
+                >
+                  {meta.name}
+                </button>
+              </span>
+              <div className="boring-cells" role="presentation">
                 {rowCells.map((cell, b) => {
                   const isCursor = b === cursorBucket;
                   const label = `${meta.name}, ${clockLabel(cell.endMinute)}, ${
@@ -157,16 +180,17 @@ export function Boring(): React.JSX.Element {
                   remaining field channels (volatility, volume) as micro-bars,
                   so information parity with the sky holds (spec §5.4). */}
               <span
+                role="gridcell"
                 className="boring-rowfigure"
-                style={{
-                  background: rampCss(rowCells[cursorBucket]?.t ?? 0.5),
-                  color: cellTextColor(rowCells[cursorBucket]?.t ?? 0.5),
-                }}
+                aria-label={`${meta.name} now: ${pct(cur?.returnSinceOpen ?? 0)} since open`}
+                style={cellChipStyle(rowCells[cursorBucket]?.t ?? 0.5)}
               >
                 {pct(cur?.returnSinceOpen ?? 0)}
               </span>
               <span
+                role="gridcell"
                 className="boring-microbars"
+                aria-label={`${meta.name} volatility ${((cur?.volatility ?? 0) * 100).toFixed(0)} of 100, volume ${((cur?.volume ?? 0) * 100).toFixed(0)} of 100`}
                 title={`volatility ${((cur?.volatility ?? 0) * 100).toFixed(0)} · volume ${((cur?.volume ?? 0) * 100).toFixed(0)}`}
               >
                 <span className="microbar" style={{ width: `${((cur?.volatility ?? 0) * 100).toFixed(0)}%` }} />

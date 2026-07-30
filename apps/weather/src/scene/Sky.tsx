@@ -2,9 +2,9 @@
 import { useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { dayFor, useWeather } from '../state/store';
-import { channelsAt } from '../state/engineBridge';
+import { useWeather } from '../state/store';
 import { currentView } from './camera';
+import { airRegistry } from './airRegistry';
 import { buildLayout } from './layout';
 import { SKY_FRAG } from './particles/shaders';
 
@@ -28,7 +28,7 @@ export function Sky(): React.JSX.Element {
         depthTest: false,
         depthWrite: false,
         uniforms: {
-          uSectorA: { value: Array.from({ length: 11 }, () => new THREE.Vector4()) },
+          uAir: { value: null },
           uPoints: {
             value: layout.points.map((p) => new THREE.Vector2(p.x, p.y)),
           },
@@ -39,11 +39,8 @@ export function Sky(): React.JSX.Element {
   );
 
   useFrame(() => {
-    const s = useWeather.getState();
-    const ch = channelsAt(dayFor(s.seed), s.minute);
-    const A = material.uniforms.uSectorA?.value as THREE.Vector4[];
-    for (let i = 0; i < 11; i++) {
-      A[i]?.set(ch.a[i * 4] ?? 0, ch.a[i * 4 + 1] ?? 0, ch.a[i * 4 + 2] ?? 0, ch.a[i * 4 + 3] ?? 0);
+    if (material.uniforms.uAir && airRegistry.current) {
+      material.uniforms.uAir.value = airRegistry.current.texture;
     }
     const view = currentView();
     (material.uniforms.uView?.value as THREE.Vector3).set(view.zoom, view.cx, view.cy);

@@ -18,6 +18,8 @@ import { buildLayout, pointsToUniform } from './layout';
 import { rampTextureData } from './ramp';
 import { ParticleSim, TIER_SIDE } from './particles/sim';
 import { RENDER_FRAG, RENDER_VERT } from './particles/shaders';
+import { AirField } from './airField';
+import { airRegistry } from './airRegistry';
 
 /** Noise/flow time is a pure function of the simulated minute → scrub-idempotent. */
 export function flowTimeFor(minute: number): number {
@@ -44,6 +46,15 @@ export function Particles(): React.JSX.Element {
   const side = TIER_SIDE[tier];
   const sim = useMemo(() => new ParticleSim(side, points), [side, points]);
   useEffect(() => () => sim.dispose(), [sim]);
+
+  const air = useMemo(() => new AirField(layout), [layout]);
+  useEffect(() => {
+    airRegistry.current = air;
+    return () => {
+      if (airRegistry.current === air) airRegistry.current = null;
+      air.dispose();
+    };
+  }, [air]);
 
   // One vertex per particle; position.xy is its uv into the position texture.
   const geometry = useMemo(() => {
@@ -75,7 +86,7 @@ export function Particles(): React.JSX.Element {
           uPositions: { value: null },
           uPositionsPrev: { value: null },
           uScrubBlend: { value: 0 },
-          uSectorA: { value: Array.from({ length: 11 }, () => new THREE.Vector4()) },
+          uAir: { value: null },
           uSectorB: { value: Array.from({ length: 11 }, () => new THREE.Vector4()) },
           uPoints: { value: Array.from({ length: 11 }, (_, i) => new THREE.Vector2(points[i * 2] ?? 0, points[i * 2 + 1] ?? 0)) },
           uView: { value: new THREE.Vector3(1, 0.5, 0.5) },
@@ -114,6 +125,7 @@ export function Particles(): React.JSX.Element {
   const lastMs = useRef(0);
   const lastMixMs = useRef(0);
   const lastReducedMinute = useRef(-1);
+  const lastAirMinute = useRef(-1);
   const focusStrength = useRef(0);
   const scrubBlendUntil = useRef(0);
 
@@ -126,18 +138,21 @@ export function Particles(): React.JSX.Element {
     const ch = channelsAt(day, s.minute);
     const flowTime = flowTimeFor(s.minute);
 
-    // Sync engine channels into both materials' uniform arrays.
+    // Sync engine channels: smooth A channels bake into the air texture on a
+    // short cadence; crisp per-region B channels stay uniform-array.
     const ru = material.uniforms;
     const su = sim.stepMaterial.uniforms;
-    const A = ru.uSectorA?.value as THREE.Vector4[];
     const B = ru.uSectorB?.value as THREE.Vector4[];
-    const SA = su.uSectorA?.value as THREE.Vector4[];
+    if (Math.abs(s.minute - lastAirMinute.current) >= 0.2 || lastAirMinute.current < 0) {
+      lastAirMinute.current = s.minute;
+      air.update(ch);
+    }
+    if (ru.uAir) ru.uAir.value = air.texture;
+    if (su.uAir) su.uAir.value = air.texture;
     // Focus/hover state → per-sector B channels (hover lift, focus dimming).
     const focusIdx = s.focus ? day.sectors.findIndex((x) => x.slug === s.focus) : -1;
     focusStrength.current += ((focusIdx >= 0 ? 1 : 0) - focusStrength.current) * 0.075;
     for (let i = 0; i < 11; i++) {
-      A[i]?.set(ch.a[i * 4] ?? 0, ch.a[i * 4 + 1] ?? 0, ch.a[i * 4 + 2] ?? 0, ch.a[i * 4 + 3] ?? 0);
-      SA[i]?.set(ch.a[i * 4] ?? 0, ch.a[i * 4 + 1] ?? 0, ch.a[i * 4 + 2] ?? 0, ch.a[i * 4 + 3] ?? 0);
       const dim = focusIdx >= 0 && i !== focusIdx ? focusStrength.current : 0;
       B[i]?.set(ch.b[i * 4] ?? 0, hover.sector === i ? 1 : 0, dim, 0);
     }

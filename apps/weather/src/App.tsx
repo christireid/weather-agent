@@ -48,7 +48,7 @@ export function App(): React.JSX.Element {
   const label = canvasLabel(day, Math.round(minute));
 
   return (
-    <div className="app">
+    <main className="app">
       <a className="skip-link" href="#hud-controls">
         Skip to controls
       </a>
@@ -74,7 +74,6 @@ export function App(): React.JSX.Element {
       <Title />
       <Hud />
       <HelpSheet />
-      <SectorOverlay />
       <FocusPanel />
       <Review />
       {act !== 'title' ? (
@@ -82,6 +81,8 @@ export function App(): React.JSX.Element {
           <Scrubber />
         </div>
       ) : null}
+      {/* After the dock in DOM order: tab flows HUD → scrubber → regions (§5). */}
+      <SectorOverlay />
       <Interactions />
       <AriaLive />
       <footer className="footer">
@@ -90,6 +91,6 @@ export function App(): React.JSX.Element {
           <a href="https://github.com/christireid/weather-agent">Christi Reid</a>
         </span>
       </footer>
-    </div>
+    </main>
   );
 }

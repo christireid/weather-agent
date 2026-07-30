@@ -81,8 +81,7 @@ ${CURL_NOISE}
 void main() {
   vec4 data = texture2D(uPositions, vUv);
   vec2 p = data.xy;
-  vec4 chA; vec4 chB;
-  blendSectors(p, chA, chB);
+  vec4 chA = airAt(p);
   float m = chA.x;
   float vol = chA.y;
 
@@ -164,6 +163,7 @@ precision highp float;
 uniform sampler2D uPositions;
 uniform sampler2D uPositionsPrev; // pre-scrub snapshot
 uniform float uScrubBlend;        // 1 → still showing the old sky, 0 → arrived
+uniform vec4 uSectorB[11];        // spike, hover, focusDim, 0
 uniform vec3 uView;        // zoom, cx, cy
 uniform float uPointScale; // device pixels at zoom 1
 uniform float uAlphaScale; // small-viewport compensation (fewer pixels per particle)
@@ -188,8 +188,10 @@ void main() {
     k = k * k * (3.0 - 2.0 * k);
     p = mix(p, prev, k);
   }
-  vec4 chA; vec4 chB;
-  blendSectors(p, chA, chB);
+  vec4 chA = airAt(p);
+  // B channels (spike/hover/focusDim) are per-region and read crisply from
+  // the nearest site — hover and focus boundaries want the region's shape.
+  vec4 chB = uSectorB[sectorAt(p)];
   float vol = chA.y;
   float volume = chA.z;
   // A whisper of per-particle temperature jitter de-bands the ramp.
@@ -272,8 +274,7 @@ void main() {
 
   // A whisper of each region's temperature in its air (channel: return) —
   // blended continuously so the sky itself never draws polygon edges.
-  vec4 chA; vec4 chB;
-  blendSectors(field, chA, chB);
+  vec4 chA = airAt(field);
   vec3 warmAir = mix(srgb2lin(vec3(0.075, 0.085, 0.160)), srgb2lin(vec3(0.120, 0.095, 0.058)), chA.w);
   sky = mix(sky, warmAir, 0.35);
 

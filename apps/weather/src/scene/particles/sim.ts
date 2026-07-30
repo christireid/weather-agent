@@ -44,13 +44,12 @@ export class ParticleSim {
     this.rtB = new THREE.WebGLRenderTarget(side, side, opts);
     this.rtSnapshot = new THREE.WebGLRenderTarget(side, side, opts);
 
-    const sectorA = Array.from({ length: 11 }, () => new THREE.Vector4());
     this.stepMaterial = new THREE.ShaderMaterial({
       vertexShader: SIM_VERT,
       fragmentShader: STEP_FRAG,
       uniforms: {
         uPositions: { value: null },
-        uSectorA: { value: sectorA },
+        uAir: { value: null },
         uPoints: { value: pointsToVec2(points) },
         uDt: { value: 0 },
         uFlowTime: { value: 0 },

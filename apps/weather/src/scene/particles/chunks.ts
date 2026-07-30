@@ -49,26 +49,15 @@ float boundaryDist(vec2 p) {
  * other at the edges, like real air masses.
  */
 export const SECTOR_BLEND = /* glsl */ `
-uniform vec4 uSectorA[11]; // momentum, volatility, volume, tempT
-uniform vec4 uSectorB[11]; // spike, hover, focusDim, 0
+// The smooth sector-channel field, baked per frame on the CPU (see
+// airField.ts): one bilinear fetch instead of an 11-site Gaussian loop —
+// the loop's exp()s were the whole frame budget on software WebGL.
+uniform sampler2D uAir; // momentum01, volatility, volume, tempT
 
-// Blend radius in field units: ≈ half a band height.
-const float BLEND_SIGMA = 0.13;
-
-void blendSectors(vec2 p, out vec4 chA, out vec4 chB) {
-  float wsum = 1e-6;
-  chA = vec4(0.0);
-  chB = vec4(0.0);
-  for (int i = 0; i < 11; i++) {
-    vec2 d = p - uPoints[i];
-    d.y *= METRIC_Y;
-    float w = exp(-dot(d, d) / (2.0 * BLEND_SIGMA * BLEND_SIGMA));
-    chA += uSectorA[i] * w;
-    chB += uSectorB[i] * w;
-    wsum += w;
-  }
-  chA /= wsum;
-  chB /= wsum;
+vec4 airAt(vec2 p) {
+  vec4 a = texture2D(uAir, clamp(p, 0.0, 1.0));
+  a.x = a.x * 2.0 - 1.0; // decode momentum back to [-1, 1]
+  return a;
 }
 `;
 

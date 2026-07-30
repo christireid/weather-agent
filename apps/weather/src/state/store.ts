@@ -45,6 +45,8 @@ export interface WeatherState {
   captureMode: boolean;
   reducedMotion: boolean;
   helpOpen: boolean;
+  /** True when the WebGL renderer is a software rasterizer (SwiftShader etc.). */
+  softwareGL: boolean;
   // actions
   setMinute(minute: number, opts?: { scrub?: boolean }): void;
   setMode(mode: Mode): void;
@@ -56,6 +58,7 @@ export interface WeatherState {
   setDprScale(s: number): void;
   setSeed(seed: number): void;
   setHelpOpen(open: boolean): void;
+  setSoftwareGL(v: boolean): void;
   /** Bumped on every scrub/jump so the particle sim knows to re-init. */
   scrubGeneration: number;
 }
@@ -71,7 +74,9 @@ export const useWeather = create<WeatherState>((set) => ({
     (initial.minute !== null || initial.mode !== null || initial.focus !== null
       ? 'field'
       : 'title'),
-  paused: initial.capture, // captures never free-run
+  // Captures never free-run; under reduced motion nothing moves on its own —
+  // time advances only by explicit scrub/step (spec §7).
+  paused: initial.capture || prefersReducedMotion,
   tier: initial.tier ?? 'high',
   tierPinned: initial.tier,
   postEnabled: true,
@@ -79,6 +84,7 @@ export const useWeather = create<WeatherState>((set) => ({
   captureMode: initial.capture,
   reducedMotion: prefersReducedMotion,
   helpOpen: false,
+  softwareGL: false,
   scrubGeneration: 0,
 
   setMinute: (minute, opts) =>
@@ -95,6 +101,7 @@ export const useWeather = create<WeatherState>((set) => ({
   setPost: (postEnabled) => set({ postEnabled }),
   setDprScale: (dprScale) => set({ dprScale }),
   setHelpOpen: (helpOpen) => set({ helpOpen }),
+  setSoftwareGL: (softwareGL) => set({ softwareGL }),
   setSeed: (seed) =>
     set((s) => ({
       seed,

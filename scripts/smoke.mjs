@@ -1,7 +1,8 @@
 // CI smoke test (spec Part 8): load the built page headless with software
 // WebGL, assert the canvas produces non-black pixels, capture one still per
 // named state.
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { PNG } from 'pngjs';
 import { CAPTURE_SIZES, launch, serveDist, settle, waitForScene } from './lib/harness.mjs';
 
 const OUT = 'docs/screenshots/smoke';
@@ -46,41 +47,36 @@ for (const [name, st] of Object.entries(STATES)) {
   }
   await settle(page, 3);
 
-  // Non-black-canvas assertion (skip for boring — the canvas is dimmed there).
+  // Non-black assertion on the actual composited pixels (readPixels on the
+  // live canvas returns zeros without preserveDrawingBuffer).
+  const shot = await page.screenshot({ path: `${OUT}/${name}.png` });
   if (st.mode !== 'boring') {
-    const lit = await page.evaluate(() => {
-      const canvas = document.querySelector('canvas');
-      if (!canvas) return -1;
-      const gl = canvas.getContext('webgl2');
-      if (!gl) return -2;
-      const px = new Uint8Array(4 * 64 * 64);
-      gl.readPixels(
-        Math.floor(canvas.width / 2) - 32,
-        Math.floor(canvas.height / 2) - 32,
-        64,
-        64,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        px,
-      );
-      let sum = 0;
-      for (let i = 0; i < px.length; i += 4) sum += (px[i] + px[i + 1] + px[i + 2]) / 3;
-      return sum / (64 * 64);
-    });
-    const ok = lit > 2; // mean brightness in the canvas center clears black
+    const png = PNG.sync.read(shot);
+    let sum = 0;
+    let n = 0;
+    // sample the central region, skipping HUD/dock bands
+    for (let y = Math.floor(png.height * 0.25); y < png.height * 0.75; y += 4) {
+      for (let x = Math.floor(png.width * 0.1); x < png.width * 0.9; x += 4) {
+        const i = (y * png.width + x) * 4;
+        sum += ((png.data[i] ?? 0) + (png.data[i + 1] ?? 0) + (png.data[i + 2] ?? 0)) / 3;
+        n++;
+      }
+    }
+    const lit = sum / n;
+    const ok = lit > 2;
     if (!ok) {
       failures++;
-      console.error(`[smoke] ✗ ${name}: canvas mean brightness ${lit}`);
+      console.error(`[smoke] ✗ ${name}: mean brightness ${lit.toFixed(2)}`);
     } else {
-      console.log(`[smoke] ✓ ${name} (canvas lit: ${Number(lit).toFixed(1)})`);
+      console.log(`[smoke] ✓ ${name} (mean brightness: ${lit.toFixed(1)})`);
     }
   } else {
     const cells = await page.evaluate(() => document.querySelectorAll('.boring-cell').length);
     const ok = cells === 11 * 78;
     if (!ok) failures++;
     console.log(`[smoke] ${ok ? '✓' : '✗'} ${name} (heatmap cells: ${cells})`);
+    writeFileSync(`${OUT}/${name}.png`, shot);
   }
-  await page.screenshot({ path: `${OUT}/${name}.png` });
 }
 
 await browser.close();

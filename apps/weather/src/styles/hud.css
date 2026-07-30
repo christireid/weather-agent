@@ -364,6 +364,71 @@
 .help-sheet p { font-size: 12px; color: var(--paper-2); line-height: 1.5; }
 .help-sheet code { color: var(--paper); }
 
+/* --- Legend --------------------------------------------------------------- */
+
+.legend {
+  position: absolute;
+  left: var(--s5);
+  bottom: 110px;
+  z-index: 20;
+}
+
+.legend-toggle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-2);
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.legend-toggle:hover { color: var(--paper); border-color: rgb(242 238 228 / 40%); }
+.legend-toggle:focus-visible { outline: 1px solid var(--paper); outline-offset: 2px; }
+
+.legend-list {
+  margin: var(--s2) 0 0;
+  background: rgb(11 12 20 / 85%);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: var(--s3) var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: hud-in 240ms var(--glide);
+}
+
+.legend-list > div { display: flex; gap: var(--s3); font-size: 11px; align-items: baseline; }
+.legend-list dt {
+  width: 74px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--paper);
+  font-size: 10px;
+}
+.legend-list dd { margin: 0; color: var(--paper-2); }
+.legend-note {
+  margin: var(--s1) 0 0;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper-2);
+  opacity: 0.7;
+}
+
+/* --- Sector hover hairlines ------------------------------------------------ */
+
+.sector-hairlines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 /* --- Software-renderer profile ------------------------------------------- */
 
 .software-gl .focus-panel,

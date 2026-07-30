@@ -4,7 +4,9 @@
 // Usage: node scripts/gifs.mjs [--seq=title,storm,toggle,focus]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
-import { GIFEncoder, quantize, applyPalette } from 'gifenc';
+import gifenc from 'gifenc';
+
+const { GIFEncoder, quantize, applyPalette } = gifenc;
 import { launch, serveDist, waitForScene } from './lib/harness.mjs';
 
 const OUT = 'docs/media';

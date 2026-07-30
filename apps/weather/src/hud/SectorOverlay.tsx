@@ -5,7 +5,7 @@
  * ring drawn around the region. Arrow keys move between regions in layout
  * order; Enter focuses a sector, Escape releases.
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { dayFor, useWeather } from '../state/store';
 import { buildLayout } from '../scene/layout';
 import { hover } from '../state/hover';
@@ -17,6 +17,34 @@ export function SectorOverlay(): React.JSX.Element | null {
   const minute = useWeather((s) => Math.round(s.minute));
   const st = useWeather.getState();
   const day = dayFor(seed);
+
+  // Hover hairline constellation (§2.4): the hovered region's boundary drawn
+  // as a hairline, never permanently. Driven imperatively from the shared
+  // hover slot so pointer moves stay render-free.
+  const hairlineRef = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    let raf = 0;
+    const tick = (): void => {
+      const svg = hairlineRef.current;
+      if (svg) {
+        const paths = svg.children;
+        for (let i = 0; i < paths.length; i++) {
+          (paths[i] as SVGElement).style.opacity = i === hover.sector ? '0.35' : '0';
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const polys = useMemo(() => {
+    const layout = buildLayout(seed);
+    return layout.polygons.map(
+      (poly) =>
+        poly.map((p, i) => `${i === 0 ? 'M' : 'L'}${(p.x * 100).toFixed(2)},${((1 - p.y) * 100).toFixed(2)}`).join('') + 'Z',
+    );
+  }, [seed]);
 
   const boxes = useMemo(() => {
     const layout = buildLayout(seed);
@@ -42,6 +70,17 @@ export function SectorOverlay(): React.JSX.Element | null {
 
   return (
     <nav className="sector-overlay" aria-label="Sky regions">
+      <svg
+        ref={hairlineRef}
+        className="sector-hairlines"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        {polys.map((d, i) => (
+          <path key={i} d={d} fill="none" stroke="#F2EEE4" strokeWidth={0.75} vectorEffect="non-scaling-stroke" style={{ opacity: 0, transition: 'opacity 240ms' }} />
+        ))}
+      </svg>
       {day.sectors.map((meta, i) => {
         const sec = day.at(t).sectors[i];
         const ret = sec?.returnSinceOpen ?? 0;

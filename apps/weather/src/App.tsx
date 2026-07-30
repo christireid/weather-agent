@@ -8,6 +8,7 @@ import { Scrubber } from './hud/Scrubber';
 import { FocusPanel } from './hud/FocusPanel';
 import { Interactions } from './hud/Interactions';
 import { SectorOverlay } from './hud/SectorOverlay';
+import { Legend } from './hud/Legend';
 import { AriaLive } from './hud/AriaLive';
 import { Boring } from './boring/Boring';
 import { BoringChoreo } from './boring/BoringChoreo';
@@ -94,6 +95,7 @@ export function App(): React.JSX.Element {
       ) : null}
       {/* After the dock in DOM order: tab flows HUD → scrubber → regions (§5). */}
       <SectorOverlay />
+      <Legend />
       <Interactions />
       <AriaLive />
       <footer className="footer">

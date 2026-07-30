@@ -82,7 +82,8 @@ export function Particles(): React.JSX.Element {
         vertexShader: RENDER_VERT,
         fragmentShader: RENDER_FRAG,
         transparent: true,
-        depthTest: false,
+        // Test (never write) depth so Act IV's vessel occludes the strokes.
+        depthTest: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         uniforms: {

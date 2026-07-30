@@ -131,3 +131,16 @@ facet inset — closed silhouette, crack lines catching the violet rim light,
 amber winner-facets against the neutral flats of a near-flat close. Desktop:
 stone left, summary right; narrow screens float it above the panel. Verified
 across tiers/sizes; smoke and axe re-run green (×2).
+
+### Pass 13 — the day, turned (geometry pass)
+
+The icosahedron's f%11 facet mapping was the object's weakest link —
+decoration, not derivation. Replaced with the lathe-of-the-index (D-017):
+the vessel's silhouette IS the day's chart, revolved. 13a: flat-shaded lathe
+rows read as stacked cream bowls — switched to smooth shading, deepened the
+glaze, strengthened the choke (radius 0.44–1.06). 13b: white speckle over the
+glaze traced to transparent-pass wind strokes drawing over the opaque vessel —
+atmosphere moved to far-plane depth with depth testing; grain 3% → 1.8%.
+Result: turned porcelain wearing the day — amber morning swell, ribbed
+midday, the 2:20 choke, pale flat close. Storm/field states verified
+unaffected.

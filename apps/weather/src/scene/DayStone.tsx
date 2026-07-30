@@ -1,17 +1,20 @@
 /**
- * Act IV — the day stone. When the market closes, the whole day condenses
- * into one faceted object (the skill-recipe "one strong 3D object" moment):
+ * Act IV — the day, turned. When the market closes, the day condenses into a
+ * vessel whose GEOMETRY is the data (D-015/D-017):
  *
- *   facet displacement  ← that sector's |return since open| at the close
- *   facet color         ← the same return through the OKLab temperature ramp
- *   surface roughness   ← the day's realized vol (vs the canonical reference):
- *                          stormy days cut rougher stones
- *   rotation / bob      ← presentation transform only (virtual-clocked,
- *                          still under prefers-reduced-motion)
+ *   lathe profile   ← the index path itself, revolved — a drawdown is a
+ *                     literal choke in the silhouette, a rally a swelling
+ *   band color      ← index return since open at that minute (OKLab ramp),
+ *                     open at the foot, close at the lip
+ *   surface rough.  ← the day's realized vol (stormy days turn rougher)
+ *   ember shimmer   ← D-016 shader extension, unchanged (vColor + aFacet)
+ *   rotation / bob  ← presentation transform, virtual-clocked, still under
+ *                     prefers-reduced-motion
  *
- * Real geometry (displaced icosahedron, flat-shaded), PBR material, perspective
- * camera, key + hemisphere + rim lights. Every attribute names its channel
- * (D-015) — a different stone for every seed.
+ * Real turned geometry (LatheGeometry from a smoothed 72-point resample of
+ * the 390-minute path, flat-shaded 44-segment revolve), PBR + injected
+ * shaders, perspective camera, key + hemisphere + rim lights. Every seed
+ * turns a different vessel.
  */
 import { useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -21,55 +24,67 @@ import { dayFor, useWeather } from '../state/store';
 import { virtualNow } from '../state/clock';
 import { sampleRamp, returnToT } from './ramp';
 
-function buildStoneGeometry(day: MarketDay): THREE.BufferGeometry {
-  const base = new THREE.IcosahedronGeometry(1, 1).toNonIndexed();
-  const pos = base.getAttribute('position');
-  const faceCount = pos.count / 3;
+const PROFILE_POINTS = 72;
+const LATHE_SEGMENTS = 44;
+
+function buildVesselGeometry(day: MarketDay): THREE.BufferGeometry {
+  const path = day.indexPath(); // 390 per-minute index values
+
+  // Resample the day to the profile resolution with a light moving average —
+  // the lathe wants a turnable curve, not minute noise.
+  const resampled: number[] = [];
+  for (let i = 0; i < PROFILE_POINTS; i++) {
+    const center = (i / (PROFILE_POINTS - 1)) * 389;
+    let sum = 0;
+    let n = 0;
+    for (let k = -6; k <= 6; k++) {
+      const t = Math.round(center + k);
+      if (t >= 0 && t <= 389) {
+        sum += path[t] ?? 0;
+        n++;
+      }
+    }
+    resampled.push(sum / Math.max(1, n));
+  }
+  const lo = Math.min(...resampled);
+  const hi = Math.max(...resampled);
+  const span = Math.max(1e-6, hi - lo);
+
+  // Profile: radius carries the index (a drawdown chokes the vessel, a rally
+  // swells it); height carries time, open at the foot → close at the lip.
+  const profile: THREE.Vector2[] = [new THREE.Vector2(0.04, -1.06)];
+  for (let i = 0; i < PROFILE_POINTS; i++) {
+    const r = 0.44 + (((resampled[i] ?? 0) - lo) / span) * 0.62;
+    const y = -1 + (i / (PROFILE_POINTS - 1)) * 2;
+    profile.push(new THREE.Vector2(r, y));
+  }
+  profile.push(new THREE.Vector2(0.04, 1.06)); // close the lip
+
+  const geo = new THREE.LatheGeometry(profile, LATHE_SEGMENTS);
+
+  // Band colors: each profile row is its minute's index return through the
+  // ramp. LatheGeometry UV.y runs along the profile → recover the minute.
+  const pos = geo.getAttribute('position');
+  const uv = geo.getAttribute('uv');
   const colors = new Float32Array(pos.count * 3);
-  const close = day.at(389);
-
-  const a = new THREE.Vector3();
-  const b = new THREE.Vector3();
-  const c = new THREE.Vector3();
-  const n = new THREE.Vector3();
-
-  const centroid = new THREE.Vector3();
-  for (let f = 0; f < faceCount; f++) {
-    const sector = f % 11;
-    const ret = close.sectors[sector]?.returnSinceOpen ?? 0;
-    // Displacement is hairline cleavage, not shrapnel: winners' facets sit a
-    // breath proud, losers' a breath deep — the crack lines catch the rim
-    // light and read as cut mineral.
-    const disp = Math.max(-0.05, Math.min(0.08, ret * 2.6));
-    a.fromBufferAttribute(pos, f * 3);
-    b.fromBufferAttribute(pos, f * 3 + 1);
-    c.fromBufferAttribute(pos, f * 3 + 2);
-    centroid.copy(a).add(b).add(c).divideScalar(3);
-    n.copy(centroid).normalize().multiplyScalar(disp);
-    for (let v = 0; v < 3; v++) {
-      const i = f * 3 + v;
-      // Slight inset toward the facet centroid keeps the silhouette closed.
-      const px = pos.getX(i) + (centroid.x - pos.getX(i)) * 0.06 + n.x;
-      const py = pos.getY(i) + (centroid.y - pos.getY(i)) * 0.06 + n.y;
-      const pz = pos.getZ(i) + (centroid.z - pos.getZ(i)) * 0.06 + n.z;
-      pos.setXYZ(i, px, py, pz);
-    }
-    const [r, g, bl] = sampleRamp(returnToT(ret));
-    for (let v = 0; v < 3; v++) {
-      colors[(f * 3 + v) * 3] = r;
-      colors[(f * 3 + v) * 3 + 1] = g;
-      colors[(f * 3 + v) * 3 + 2] = bl;
-    }
+  const bandIds = new Float32Array(pos.count);
+  const rows = profile.length;
+  for (let i = 0; i < pos.count; i++) {
+    const v = uv.getY(i); // 0 at foot → 1 at lip
+    const row = Math.round(v * (rows - 1));
+    const pi = Math.max(0, Math.min(PROFILE_POINTS - 1, row - 1));
+    const minute = Math.round((pi / (PROFILE_POINTS - 1)) * 389);
+    const [r, g, b] = sampleRamp(returnToT(day.at(minute).index));
+    // Deepen toward a glaze — the ember shader re-lights it from within.
+    colors[i * 3] = Math.pow(r * 0.82, 1.25);
+    colors[i * 3 + 1] = Math.pow(g * 0.82, 1.25);
+    colors[i * 3 + 2] = Math.pow(b * 0.82, 1.25);
+    bandIds[i] = pi / (PROFILE_POINTS - 1); // ember shimmer phase per band
   }
-  base.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  // Per-facet phase for the ember shimmer (custom shader injection below).
-  const facetIds = new Float32Array(pos.count);
-  for (let f = 0; f < faceCount; f++) {
-    for (let v = 0; v < 3; v++) facetIds[f * 3 + v] = f / faceCount;
-  }
-  base.setAttribute('aFacet', new THREE.BufferAttribute(facetIds, 1));
-  base.computeVertexNormals();
-  return base;
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('aFacet', new THREE.BufferAttribute(bandIds, 1));
+  geo.computeVertexNormals();
+  return geo;
 }
 
 export function DayStone(): React.JSX.Element | null {
@@ -82,9 +97,9 @@ export function DayStone(): React.JSX.Element | null {
   // it floats above the centered panel.
   const narrow = size.width / Math.max(1, size.height) < 1.05;
   const basePos: [number, number, number] = narrow ? [0, 2.05, 0] : [-1.5, 0.1, 0];
-  const scale = narrow ? 0.72 : 1.35;
+  const scale = narrow ? 0.68 : 1.15;
 
-  const geometry = useMemo(() => buildStoneGeometry(day), [day]);
+  const geometry = useMemo(() => buildVesselGeometry(day), [day]);
   useEffect(() => () => geometry.dispose(), [geometry]);
 
   const material = useMemo(() => {
@@ -92,7 +107,7 @@ export function DayStone(): React.JSX.Element | null {
     const peak = Math.min(1.2, classifyDay(day).peakVol);
     const mat = new THREE.MeshStandardMaterial({
       vertexColors: true,
-      flatShading: true,
+      flatShading: false, // turned surface — the silhouette carries the form
       metalness: 0.22,
       roughness: 0.58 - 0.26 * Math.min(1, peak),
       emissive: new THREE.Color('#11131F'),
@@ -165,8 +180,8 @@ export function DayStone(): React.JSX.Element | null {
   return (
     <group>
       {/* Lights live with the stone so the field pays nothing for them. */}
-      <hemisphereLight args={["#F2EEE4", "#0B0C14", 0.35]} />
-      <directionalLight position={[3.4, 4.2, 4.8]} intensity={0.95} color="#FFF4E2" />
+      <hemisphereLight args={["#F2EEE4", "#0B0C14", 0.28]} />
+      <directionalLight position={[3.4, 4.2, 4.8]} intensity={0.75} color="#FFF4E2" />
       <directionalLight position={[-4.2, 1.2, -2.8]} intensity={1.1} color="#7A86E8" />
       <mesh
         name="day-stone"

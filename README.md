@@ -100,10 +100,13 @@ and building both. Boring Mode doubles as the screen-reader surface and the no-W
 
 ---
 
-## The day ends
+## The day ends — and is turned
 
-At 4:00 PM the field freezes and the day typesets itself. **Replay** runs the same seed again;
-**new weather** draws a fresh non-flat day — every day shareable by URL (`?seed=`).
+At 4:00 PM the field stills, and the day condenses into a **vessel turned from its own chart**:
+the index path revolved on a lathe — the 2:20 drawdown is a literal choke in the silhouette,
+the recovery flares the lip, and the bands are glazed by each minute's return. Stormy days turn
+rougher, harder-smoldering vessels. **Replay** runs the same seed; **new weather** turns a new
+one — every day shareable by URL (`?seed=`).
 
 ![Act IV — the day in review](docs/screenshots/loop-b/review-high-desktop.png)
 
@@ -144,7 +147,7 @@ velocity, length growing with local speed, comet-shaded so the bright head shows
 the sector is moving even in a paused frame — calm air is fine grain, a squall is combed into
 long ragged filaments. Size and gate come from volume, color from the OKLab temperature ramp
 LUT, depth-layered parallax from three drift layers — all under a strict post budget: bloom
-(high threshold), ACES, 3% grain, vignette. Scrubs re-seed positions from
+(high threshold), ACES, fine grain, vignette. Scrubs re-seed positions from
 `hash(seed, minute)` and warm up 90 fixed steps, so minute *t* is the same sky no matter how
 you got there. The whole day runs on one injected virtual clock — no wall-clock reads
 anywhere a capture could see.

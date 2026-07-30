@@ -187,3 +187,20 @@ the facet's own return color; ember strength = day vol (stormy stones smolder
 harder); rim = presentation lighting. Shimmer freezes under reduced motion.
 Diffuse lighting was rebalanced downward so the internal glow, not the lamps,
 carries the color.
+
+### D-017 · The day, turned (vessel geometry)
+
+The Act IV object's geometry is now derived from the data rather than
+decorated by it: a LatheGeometry whose profile IS the index path — a smoothed
+72-point resample revolved in 44 segments, radius carrying the index (a
+drawdown is a literal choke in the silhouette, a rally a swelling), height
+carrying time from open (foot) to close (lip). Band vertex colors are each
+minute's index return through the shared ramp; the D-016 ember/fresnel shader
+carries over unchanged (aFacet reused as band phase). Two finish passes:
+smooth shading replaced flat (the lathe's flat rows read as stacked bowls),
+and the film grain dropped 3% → 1.8% (premultiply grain over a bright glaze
+read as speckle; the wind strokes now carry the field's texture, so banding
+risk is low). One rendering bug found by eye: R3F draws transparent points
+after opaque meshes, so the wind strokes speckled OVER the vessel — fixed by
+placing the atmosphere at far-plane depth and letting it depth-test against
+the vessel (the scene's only depth writer).

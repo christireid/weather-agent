@@ -258,7 +258,9 @@ void main() {
   vBright *= 1.0 + 0.25 * uStormEmphasis * vol;
 
   vec2 view = (p - uView.yz) * uView.x + 0.5;
-  gl_Position = vec4(view * 2.0 - 1.0, 0.0, 1.0);
+  // Atmosphere sits at the far plane: the only depth-writing object (Act IV's
+  // vessel) occludes it, while the sky (no depth ops) stays beneath.
+  gl_Position = vec4(view * 2.0 - 1.0, 0.9999, 1.0);
   gl_PointSize = size;
 }
 `;

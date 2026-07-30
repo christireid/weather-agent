@@ -39,7 +39,7 @@ export function Effects(): React.JSX.Element | null {
       <Bloom intensity={0.55} luminanceThreshold={0.72} luminanceSmoothing={0.18} mipmapBlur />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       <Vignette eskil={false} offset={0.18} darkness={0.42} />
-      <Noise premultiply blendFunction={BlendFunction.ADD} opacity={0.03} />
+      <Noise premultiply blendFunction={BlendFunction.ADD} opacity={0.018} />
     </EffectComposer>
   );
 }

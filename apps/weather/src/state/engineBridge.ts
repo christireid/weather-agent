@@ -67,7 +67,10 @@ export function channelsAt(day: MarketDay, minute: number): ChannelFrame {
     if (!a0 || !a1) continue;
     const momentum = a0.momentum + (a1.momentum - a0.momentum) * f;
     const vol = a0.volatility + (a1.volatility - a0.volatility) * f;
-    const volume = a0.volume + (a1.volume - a0.volume) * f;
+    // √-compress volume for display: the shock-minute spike owns the linear
+    // normalization and was squashing the whole rest of the day to near-zero
+    // density (Loop C regime finding). Monotone transform, same channel.
+    const volume = Math.sqrt(Math.max(0, a0.volume + (a1.volume - a0.volume) * f));
     const ret = a0.returnSinceOpen + (a1.returnSinceOpen - a0.returnSinceOpen) * f;
     const tempT = Math.min(1, Math.max(0, ret / (2 * RAMP_RETURN_RANGE) + 0.5));
     frame.a[s * 4] = momentum;

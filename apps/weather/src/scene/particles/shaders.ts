@@ -60,6 +60,20 @@ varying vec2 vUv;
 uniform sampler2D uPositions;
 uniform float uDt;         // seconds (virtual)
 uniform float uFlowTime;   // minute-derived noise time — scrub-idempotent
+// Title act (§7): particles condense into glyph targets, hold, disperse.
+uniform sampler2D uGlyphTargets;
+uniform float uTitleMix;     // 0 free field … 1 full glyph hold
+uniform float uTitleShimmer; // shimmer amplitude during the hold
+uniform float uTitleBurst;   // dispersal gust: blows the letters back into sky
+// Act III focus: the selected region organizes into a local vortex.
+uniform vec4 uFocusData;     // cx, cy, strength, 0
+// Boring Mode settle (§3.3): particles align to their sector row's cell
+// centers before the DOM heatmap fades in over them.
+uniform float uBoringMix;
+// Storm emphasis (§7 regime transitions): a choreographed window around the
+// scheduled macro shock — anticipation, impact, long decay — driven entirely
+// by the engine's shock event (channel: the shock schedule).
+uniform float uStormEmphasis;
 ${SECTOR_LOOKUP}
 ${SECTOR_BLEND}
 ${CURL_NOISE}
@@ -77,13 +91,18 @@ void main() {
   float th = 0.61 * abs(m);
   vec2 wind = vec2(cos(th), sin(th)) * (0.030 * m);
 
-  // Turbulence: volatility shrinks the eddies and feeds their energy.
+  // Turbulence: volatility shrinks the eddies and feeds their energy. The
+  // storm-emphasis window leans on the same term so the squall's onset is
+  // felt building, not switched on.
   float eddy = mix(3.0, 8.5, vol);
-  vec2 turb = curl(p * eddy + data.w * 6.2831, uFlowTime) * (0.010 + 0.140 * vol * vol);
+  float turbGain = (0.010 + 0.140 * vol * vol) * (1.0 + 0.55 * uStormEmphasis * vol);
+  vec2 turb = curl(p * eddy + data.w * 6.2831, uFlowTime) * turbGain;
 
   // Depth layers drift at different rates — parallax gives the sky its depth.
+  // The title dispersal rides the same flow, amplified — the letters are not
+  // erased, they are blown back into the atmosphere.
   float depthMul = 0.55 + 0.9 * data.z;
-  p += (wind + turb) * uDt * depthMul;
+  p += (wind + turb) * uDt * depthMul * (1.0 + 7.0 * uTitleBurst);
 
   // A breath of diffusion: keeps particles from collecting into hard ribbons
   // along slow eddy cores (Loop B pass 2 finding — the streak artifact).
@@ -92,6 +111,41 @@ void main() {
     hash21(p * 197.3 + data.w * 29.0 - uFlowTime)
   ) - 0.5;
   p += jitter * 0.055 * uDt;
+
+  // Act III vortex: tangential swirl + gentle inward pull, Gaussian falloff
+  // around the focused region's center. Strength animates with the flight.
+  if (uFocusData.z > 0.001) {
+    vec2 rel = p - uFocusData.xy;
+    float r = length(rel) + 1e-4;
+    vec2 tangent = vec2(-rel.y, rel.x) / r;
+    float fall = exp(-r * r / (2.0 * 0.16 * 0.16));
+    p += tangent * (0.14 * uFocusData.z * fall) * uDt;
+    p -= (rel / r) * (0.035 * uFocusData.z * fall * smoothstep(0.04, 0.30, r)) * uDt;
+  }
+
+  // Boring settle: each particle files into the heatmap grid — its sector's
+  // row, a hash-chosen 5-minute column — so the spectacle visibly *becomes*
+  // the chart before the DOM takes over.
+  if (uBoringMix > 0.001) {
+    int rowSector = sectorAt(data.xy);
+    float col = (floor(data.w * 78.0) + 0.5) / 78.0;
+    float row = 1.0 - (float(rowSector) + 0.5) / 11.0;
+    // Match the DOM heatmap's frame: full width, vertically centered band.
+    vec2 cell = vec2(col, 0.16 + row * 0.62);
+    float pull = 1.0 - exp(-uBoringMix * uDt * 7.0);
+    p += (cell - p) * pull;
+  }
+
+  // Title act: a strong, frame-rate-independent pull toward each particle's
+  // glyph target; shimmer keeps the held letters alive without breaking them.
+  if (uTitleMix > 0.001) {
+    vec4 g = texture2D(uGlyphTargets, vUv);
+    vec2 toT = g.xy - p;
+    float pull = 1.0 - exp(-uTitleMix * uDt * 9.0);
+    p += toT * pull;
+    float ph = g.z * 6.2831 + uFlowTime * 2.2 + data.w * 12.0;
+    p += vec2(cos(ph), sin(ph * 1.31)) * 0.0014 * uTitleShimmer;
+  }
 
   // Toroidal wrap into [-0.04, 1.04] (period 1.08): a small off-screen margin
   // so particles drift out of frame before reappearing on the other side.
@@ -108,10 +162,14 @@ void main() {
 export const RENDER_VERT = /* glsl */ `
 precision highp float;
 uniform sampler2D uPositions;
+uniform sampler2D uPositionsPrev; // pre-scrub snapshot
+uniform float uScrubBlend;        // 1 → still showing the old sky, 0 → arrived
 uniform vec3 uView;        // zoom, cx, cy
 uniform float uPointScale; // device pixels at zoom 1
 uniform float uAlphaScale; // small-viewport compensation (fewer pixels per particle)
 uniform float uFlowTime;
+uniform float uTitleGlow;  // restrained lift while the wordmark holds
+uniform float uStormEmphasis; // density/brightness pulse around the macro shock
 varying float vTempT;
 varying float vAlpha;
 varying float vBright;
@@ -122,6 +180,14 @@ ${CURL_NOISE}
 void main() {
   vec4 data = texture2D(uPositions, position.xy);
   vec2 p = data.xy;
+  // Scrub crossfade (§3.2): each particle glides from where it was displayed
+  // to its deterministically recomputed position — dragging weather.
+  if (uScrubBlend > 0.001) {
+    vec2 prev = texture2D(uPositionsPrev, position.xy).xy;
+    float k = uScrubBlend;
+    k = k * k * (3.0 - 2.0 * k);
+    p = mix(p, prev, k);
+  }
   vec4 chA; vec4 chB;
   blendSectors(p, chA, chB);
   float vol = chA.y;
@@ -153,6 +219,11 @@ void main() {
   // Stormy sectors glint slightly brighter at their core so the bloom pass
   // has something honest to bite on (channel: volatility).
   vBright *= 1.0 + 0.35 * vol;
+  vBright *= 1.0 + 0.55 * uTitleGlow;
+  // Density pulses through the squall (volume channel scaled by the shock
+  // window, so the pulse belongs to the storm's sectors).
+  vAlpha *= 1.0 + 0.30 * uStormEmphasis * vol;
+  vBright *= 1.0 + 0.25 * uStormEmphasis * vol;
 
   vec2 view = (p - uView.yz) * uView.x + 0.5;
   gl_Position = vec4(view * 2.0 - 1.0, 0.0, 1.0);

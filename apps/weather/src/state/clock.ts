@@ -28,7 +28,7 @@ export function tickFromRaf(rafTs: number): number {
   const dt = lastRafTs === null ? 0 : Math.min(100, rafTs - lastRafTs);
   lastRafTs = rafTs;
   virtualMs += dt;
-  if (!s.paused && s.act !== 'title' && s.mode === 'field') {
+  if (!s.paused && s.act === 'field' && s.mode === 'field') {
     const advance = (dt / 1000) * MINUTES_PER_SECOND;
     const next = s.minute + advance;
     if (next >= 389) {
@@ -45,7 +45,7 @@ export function tickFromRaf(rafTs: number): number {
 export function stepVirtual(ms: number): void {
   virtualMs += ms;
   const s = useWeather.getState();
-  if (!s.paused && s.act !== 'title' && s.mode === 'field') {
+  if (!s.paused && s.act === 'field' && s.mode === 'field') {
     s.setMinute(Math.min(389, s.minute + (ms / 1000) * MINUTES_PER_SECOND));
   }
 }

@@ -20,12 +20,15 @@ export class ParticleSim {
   readonly side: number;
   private rtA: THREE.WebGLRenderTarget;
   private rtB: THREE.WebGLRenderTarget;
+  /** Snapshot of the pre-scrub state for the ≤400ms advection blend (§3.2). */
+  private rtSnapshot: THREE.WebGLRenderTarget;
   private current = 0;
   private scene: THREE.Scene;
   private camera: THREE.OrthographicCamera;
   private quad: THREE.Mesh;
   readonly stepMaterial: THREE.ShaderMaterial;
   private initMaterial: THREE.ShaderMaterial;
+  private copyMaterial: THREE.ShaderMaterial;
 
   constructor(side: number, points: Float32Array) {
     this.side = side;
@@ -39,6 +42,7 @@ export class ParticleSim {
     };
     this.rtA = new THREE.WebGLRenderTarget(side, side, opts);
     this.rtB = new THREE.WebGLRenderTarget(side, side, opts);
+    this.rtSnapshot = new THREE.WebGLRenderTarget(side, side, opts);
 
     const sectorA = Array.from({ length: 11 }, () => new THREE.Vector4());
     this.stepMaterial = new THREE.ShaderMaterial({
@@ -50,12 +54,25 @@ export class ParticleSim {
         uPoints: { value: pointsToVec2(points) },
         uDt: { value: 0 },
         uFlowTime: { value: 0 },
+        uGlyphTargets: { value: null },
+        uTitleMix: { value: 0 },
+        uTitleShimmer: { value: 0 },
+        uTitleBurst: { value: 0 },
+        uBoringMix: { value: 0 },
+        uStormEmphasis: { value: 0 },
+        uFocusData: { value: new THREE.Vector4(0.5, 0.5, 0, 0) },
       },
     });
     this.initMaterial = new THREE.ShaderMaterial({
       vertexShader: SIM_VERT,
       fragmentShader: INIT_FRAG,
       uniforms: { uSeedMinuteHash: { value: 0 } },
+    });
+    this.copyMaterial = new THREE.ShaderMaterial({
+      vertexShader: SIM_VERT,
+      fragmentShader: `precision highp float; varying vec2 vUv; uniform sampler2D uSrc;
+void main() { gl_FragColor = texture2D(uSrc, vUv); }`,
+      uniforms: { uSrc: { value: null } },
     });
 
     this.scene = new THREE.Scene();
@@ -84,8 +101,23 @@ export class ParticleSim {
     this.current = 1 - this.current;
   }
 
+  get snapshotTexture(): THREE.Texture {
+    return this.rtSnapshot.texture;
+  }
+
   /** Deterministic re-init + warm-up for minute t (spec §3.2). */
   reinit(renderer: THREE.WebGLRenderer, seed: number, minute: number, flowTime: number): void {
+    // Snapshot the outgoing state first: the renderer crossfades particle
+    // positions from this snapshot into the recomputed sky over ≤400ms, so a
+    // scrub feels like dragging weather, not seeking video.
+    const cu = this.copyMaterial.uniforms;
+    if (cu.uSrc) cu.uSrc.value = (this.current === 0 ? this.rtA : this.rtB).texture;
+    this.quad.material = this.copyMaterial;
+    const prevRt = renderer.getRenderTarget();
+    renderer.setRenderTarget(this.rtSnapshot);
+    renderer.render(this.scene, this.camera);
+    renderer.setRenderTarget(prevRt);
+
     const h = hashCombine(seed, Math.round(minute)) / 0xffffffff;
     this.quad.material = this.initMaterial;
     const iu = this.initMaterial.uniforms;
@@ -113,8 +145,10 @@ export class ParticleSim {
   dispose(): void {
     this.rtA.dispose();
     this.rtB.dispose();
+    this.rtSnapshot.dispose();
     this.stepMaterial.dispose();
     this.initMaterial.dispose();
+    this.copyMaterial.dispose();
     this.quad.geometry.dispose();
   }
 }

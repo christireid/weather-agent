@@ -1,0 +1,379 @@
+/* --- HUD strip ----------------------------------------------------------- */
+
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--s4) var(--s5);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hud > * {
+  pointer-events: auto;
+}
+
+/* staggered fade-in after the title act (60ms per element) */
+.hud-el {
+  animation: hud-in 480ms var(--glide) backwards;
+}
+.hud-el:nth-child(2) { animation-delay: 60ms; }
+.hud-el:nth-child(3) { animation-delay: 120ms; }
+.dock .hud-el { animation-delay: 180ms; }
+
+@keyframes hud-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-el { animation: none; }
+}
+
+.hud-brand { display: flex; flex-direction: column; gap: 2px; }
+.hud-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  color: var(--paper);
+}
+.hud-sub {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper-2);
+}
+
+.hud-clock { display: flex; gap: var(--s4); align-items: baseline; }
+.hud-time { font-size: 20px; font-weight: 500; }
+.hud-index { font-size: 13px; letter-spacing: 0.04em; }
+
+.hud-controls { display: flex; align-items: center; gap: var(--s2); }
+
+.hud button,
+.review-actions button,
+.help-sheet button {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: none;
+  color: var(--paper);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: border-color 240ms var(--glide), background 240ms var(--glide);
+}
+
+.hud button:hover,
+.review-actions button:hover,
+.help-sheet button:hover {
+  border-color: rgb(242 238 228 / 45%);
+  background: rgb(242 238 228 / 6%);
+}
+
+.hud button:focus-visible,
+.review-actions button:focus-visible,
+.help-sheet button:focus-visible,
+.scrubber svg:focus-visible,
+.footer a:focus-visible,
+.panel-close:focus-visible {
+  outline: 1px solid var(--paper);
+  outline-offset: 2px;
+}
+
+.hud-tier { color: var(--paper-2); font-size: 12px; padding: 0 var(--s1); }
+
+/* --- Title overlay -------------------------------------------------------- */
+
+.title-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 18vh;
+  z-index: 15;
+  pointer-events: none;
+  text-align: center;
+}
+
+.title-static {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(40px, 8vw, 96px);
+  margin: 0 0 var(--s4);
+  color: var(--paper);
+}
+
+.title-subtitle {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--paper);
+  opacity: 0;
+  animation: fade-in 800ms var(--glide) 1.4s forwards;
+  margin: 0;
+}
+
+.title-hint {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-2);
+  opacity: 0;
+  animation: fade-in 800ms var(--glide) 2.2s forwards;
+  margin: var(--s3) 0 0;
+}
+
+@keyframes fade-in { to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .title-subtitle, .title-hint { animation: none; opacity: 1; }
+}
+
+/* --- Scrubber ------------------------------------------------------------- */
+
+.dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 26px;
+  padding: 0 var(--s5);
+  z-index: 20;
+}
+
+.scrubber svg {
+  display: block;
+  width: 100%;
+  height: 56px;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.scrubber-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--paper-2);
+  margin-top: 2px;
+}
+
+/* --- Hover label ----------------------------------------------------------- */
+
+.hover-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: rgb(11 12 20 / 72%);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 240ms var(--glide);
+}
+
+/* --- Focus panel ----------------------------------------------------------- */
+
+.focus-panel {
+  position: absolute;
+  top: 72px;
+  right: var(--s5);
+  bottom: 110px;
+  width: min(340px, calc(100vw - 32px));
+  z-index: 25;
+  background: rgb(11 12 20 / 82%);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: var(--s5);
+  overflow-y: auto;
+}
+
+.focus-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--s4);
+}
+
+.focus-panel h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 26px;
+  margin: 0;
+}
+
+.panel-close {
+  background: none;
+  border: none;
+  color: var(--paper-2);
+  font-size: 14px;
+  cursor: pointer;
+  padding: var(--s1);
+}
+
+.panel-figures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s3);
+  margin: 0 0 var(--s5);
+  padding-bottom: var(--s4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.panel-figures dt,
+.panel-tickers .tk-name,
+.panel-note {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper-2);
+}
+
+.panel-figures dd {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.panel-tickers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.panel-tickers li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--s3);
+  align-items: center;
+  border-bottom: 1px solid rgb(242 238 228 / 7%);
+  padding-bottom: var(--s3);
+}
+
+.tk-sym { font-weight: 500; font-size: 13px; }
+.tk-name { grid-column: 2; grid-row: 1; }
+.spark { grid-column: 1 / 2 span; grid-row: 2; width: 100%; }
+.tk-ret { grid-column: 2; grid-row: 1; justify-self: end; font-size: 12px; }
+
+.panel-note { margin: var(--s4) 0 0; }
+
+/* --- Review panel ----------------------------------------------------------- */
+
+.review-panel {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  z-index: 25;
+  width: min(420px, calc(100vw - 32px));
+  background: rgb(11 12 20 / 85%);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: var(--s6);
+  animation: hud-in 480ms var(--glide) backwards;
+}
+
+.review-panel h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 30px;
+  margin: 0 0 var(--s5);
+}
+
+.review-panel dl {
+  margin: 0 0 var(--s5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.review-panel dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s4);
+}
+
+.review-panel dt {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper-2);
+}
+
+.review-panel dd { margin: 0; font-size: 15px; font-weight: 500; }
+
+.review-actions { display: flex; gap: var(--s3); }
+
+.review-seed {
+  margin: var(--s4) 0 0;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--paper-2);
+}
+
+/* --- Help sheet ----------------------------------------------------------- */
+
+.help-sheet {
+  position: absolute;
+  top: 72px;
+  right: var(--s5);
+  z-index: 40;
+  width: min(320px, calc(100vw - 32px));
+  background: rgb(11 12 20 / 88%);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: var(--s5);
+}
+
+.help-sheet h3 {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-2);
+  margin: 0 0 var(--s3);
+}
+
+.help-sheet dl { margin: 0 0 var(--s4); display: flex; flex-direction: column; gap: 6px; }
+.help-sheet dl > div { display: flex; gap: var(--s3); font-size: 12px; }
+.help-sheet dt { width: 52px; color: var(--paper); font-weight: 500; }
+.help-sheet dd { margin: 0; color: var(--paper-2); }
+.help-sheet p { font-size: 12px; color: var(--paper-2); line-height: 1.5; }
+.help-sheet code { color: var(--paper); }
+
+/* --- Skip link ----------------------------------------------------------- */
+
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: var(--s4);
+  z-index: 50;
+  background: var(--paper);
+  color: var(--sky);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius);
+  font-size: 12px;
+  transition: top 240ms var(--glide);
+}
+
+.skip-link:focus-visible { top: var(--s4); }

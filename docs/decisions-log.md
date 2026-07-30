@@ -84,3 +84,28 @@ Particle size and alpha scale with `√(viewportArea / 1600×1000)` clamped to
 [0.5, 1.25], so the same particle budget reads as the same weather on a phone
 instead of fog. The compensation is resolution-driven, not data-driven — it
 carries no market meaning.
+
+## 2026-07-30 — Stage 4 (Boring Mode + DOM layer)
+
+### D-009 · Information-parity check (spec §5.4 gate)
+
+Five seeded minutes drawn from `hashCombine(seed, 0x9a17)` → minutes 129, 117,
+243, and two others (full dump reproducible via `node scripts/parity.mjs`).
+For each, every fact the field conveys through the metaphor contract, and its
+Boring Mode recovery path:
+
+| Field fact (channel)                        | Boring Mode recovery                                              |
+| ------------------------------------------- | ----------------------------------------------------------------- |
+| Sector rising/falling since open (color)    | Heatmap cell color at cursor bucket + signed row figure           |
+| Which sectors strongest/weakest (color)     | Rank row figures (tabular numerals, ramp-colored chips)           |
+| Sector momentum direction (wind direction)  | Sign/slope of recent cells in the row (bucket-to-bucket change)   |
+| Relative volatility per sector (turbulence) | Row micro-bar 1 (volatility, 0–1) + cell aria-labels              |
+| Relative volume per sector (density/size)   | Row micro-bar 2 (volume, 0–1) + focus panel volume figure         |
+| Volume spikes (luminance pulses)            | Micro-bar 2 peaks; focus panel volume/min at cursor               |
+| Index level & path (HUD readout)            | Index line above heatmap + index figure, same cursor              |
+| Market-vol regime (storm emphasis)          | Scrubber heat strip (unchanged in both modes)                     |
+
+Initial check FAILED on rows 4–5 (volatility and volume had no visual Boring
+representation — aria-only is not parity). Fixed by adding the per-row
+micro-bars with a header legend before proceeding. Re-checked: every fact
+above is recoverable from Boring Mode + panel figures alone. Gate passed.

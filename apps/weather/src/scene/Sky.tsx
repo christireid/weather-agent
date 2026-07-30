@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { dayFor, useWeather } from '../state/store';
 import { channelsAt } from '../state/engineBridge';
+import { currentView } from './camera';
 import { buildLayout } from './layout';
 import { SKY_FRAG } from './particles/shaders';
 
@@ -44,6 +45,8 @@ export function Sky(): React.JSX.Element {
     for (let i = 0; i < 11; i++) {
       A[i]?.set(ch.a[i * 4] ?? 0, ch.a[i * 4 + 1] ?? 0, ch.a[i * 4 + 2] ?? 0, ch.a[i * 4 + 3] ?? 0);
     }
+    const view = currentView();
+    (material.uniforms.uView?.value as THREE.Vector3).set(view.zoom, view.cx, view.cy);
   });
 
   return (

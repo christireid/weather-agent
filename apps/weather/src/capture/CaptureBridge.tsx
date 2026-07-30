@@ -24,6 +24,7 @@ declare global {
       state(): { minute: number; mode: string; act: string; tier: string; seed: number };
     };
     __mwFrames?: number;
+    __mwGlyphsReady?: boolean;
   }
 }
 

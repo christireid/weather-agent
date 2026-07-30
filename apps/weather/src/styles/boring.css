@@ -1,0 +1,185 @@
+/* --- Boring Mode ----------------------------------------------------------- */
+
+.boring-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 72px var(--s6) 120px;
+  overflow-y: auto;
+}
+
+/* The choreographed entrance (particles settle → heatmap fades up → canvas
+   dims) is driven from the virtual clock by BoringChoreo, not CSS, so the
+   capture harness can step through it. */
+
+.boring {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.boring-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s4);
+  margin-bottom: var(--s4);
+}
+
+.boring-head h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  margin: 0 0 var(--s1);
+}
+
+.boring-head p {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--paper-2);
+}
+
+.boring-figures {
+  display: flex;
+  gap: var(--s4);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.boring-index svg {
+  display: block;
+  width: 100%;
+  height: 62px;
+  margin-bottom: var(--s4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.boring-row {
+  display: grid;
+  grid-template-columns: 118px 1fr 76px 44px;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: 3px;
+}
+
+.boring-microbars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.microbar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--paper);
+  opacity: 0.75;
+  min-width: 2px;
+}
+
+.microbar + .microbar { opacity: 0.4; }
+
+.boring-barlegend {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--paper-2);
+}
+
+.boring-rowlabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+  background: none;
+  border: none;
+  text-align: right;
+  padding: 2px var(--s1);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+
+.boring-rowlabel:hover { color: var(--warm-1); }
+.boring-rowlabel:focus-visible { outline: 1px solid var(--paper); outline-offset: 1px; }
+
+.boring-cells {
+  display: grid;
+  grid-template-columns: repeat(78, 1fr);
+  gap: 1px;
+  height: 26px;
+}
+
+.boring-cell {
+  border: none;
+  padding: 0;
+  border-radius: 1px;
+  cursor: pointer;
+  opacity: 0.92;
+}
+
+.boring-cell:hover { opacity: 1; outline: 1px solid var(--paper); outline-offset: 0; z-index: 2; }
+.boring-cell:focus-visible { outline: 1.5px solid var(--paper); outline-offset: 0; opacity: 1; z-index: 2; }
+.boring-cell.is-cursor { outline: 1px solid rgb(242 238 228 / 55%); z-index: 1; }
+
+.boring-rowfigure {
+  font-size: 12px;
+  font-weight: 500;
+  font-feature-settings: 'tnum';
+  text-align: right;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.fallback-note {
+  width: min(1180px, 100%);
+  margin: 0 auto var(--s4);
+  font-size: 12px;
+  color: var(--paper-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: var(--s3) var(--s4);
+}
+
+/* --- Sector overlay (keyboard path) --------------------------------------- */
+
+.sector-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.sector-region {
+  position: absolute;
+  background: none;
+  border: none;
+  pointer-events: auto;
+  cursor: pointer;
+  /* invisible but focusable; the ring appears only on keyboard focus */
+}
+
+.sector-region:focus-visible {
+  outline: 1px solid rgb(242 238 228 / 70%);
+  outline-offset: -6px;
+  border-radius: 10px;
+}
+
+/* pointer users interact through Interactions' hit-testing; the buttons are
+   for the keyboard, so don't let them swallow clicks meant for the sky */
+@media (pointer: fine) {
+  .sector-region { pointer-events: none; }
+  .sector-region:focus-visible { pointer-events: auto; }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

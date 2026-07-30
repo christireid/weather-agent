@@ -1,0 +1,34 @@
+{
+  "name": "@market-weather/weather",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "echo 'no unit tests in app package (engine tests live in packages/market; e2e via root smoke/capture scripts)'"
+  },
+  "dependencies": {
+    "@fontsource-variable/newsreader": "^5.2.14",
+    "@fontsource/ibm-plex-mono": "^5.2.14",
+    "@market-weather/market": "workspace:*",
+    "@react-three/fiber": "^9.4.0",
+    "@react-three/postprocessing": "^3.0.4",
+    "postprocessing": "^6.38.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "three": "^0.182.0",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.182.0",
+    "@vitejs/plugin-react": "^5.1.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-glsl": "^1.5.1"
+  }
+}

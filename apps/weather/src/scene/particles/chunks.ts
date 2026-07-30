@@ -93,11 +93,14 @@ float psi(vec2 p, float t) {
   return n;
 }
 
-// Curl via central differences: v = (∂ψ/∂y, −∂ψ/∂x).
+// Curl via forward differences: v = (∂ψ/∂y, −∂ψ/∂x). Forward (3 ψ evals)
+// instead of central (4) — the tiny directional bias is invisible, the 25%
+// shader-cost cut is not (software WebGL budget, Loop E).
 vec2 curl(vec2 p, float t) {
   const float e = 0.06;
-  float dy = psi(p + vec2(0.0, e), t) - psi(p - vec2(0.0, e), t);
-  float dx = psi(p + vec2(e, 0.0), t) - psi(p - vec2(e, 0.0), t);
-  return vec2(dy, -dx) / (2.0 * e);
+  float base = psi(p, t);
+  float dy = psi(p + vec2(0.0, e), t) - base;
+  float dx = psi(p + vec2(e, 0.0), t) - base;
+  return vec2(dy, -dx) / e;
 }
 `;

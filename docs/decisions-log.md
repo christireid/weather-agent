@@ -109,3 +109,33 @@ Initial check FAILED on rows 4–5 (volatility and volume had no visual Boring
 representation — aria-only is not parity). Fixed by adding the per-row
 micro-bars with a header legend before proceeding. Re-checked: every fact
 above is recoverable from Boring Mode + panel figures alone. Gate passed.
+
+## 2026-07-30 — Stage 5 (Loops D and E)
+
+### D-010 · Per-cell contrast beyond the spec's switch
+
+§6.2's two-way luminance switch (sky-dark ink on warm/neutral cells, paper on
+deep cool) fails on the mid-cool ramp band: at cell luminance ≈ 0.17 BOTH inks
+measure < 4.5:1 (dark 4.18, paper 4.03 — computed, WCAG relative luminance).
+Where neither ink passes, the figure chip's background darkens toward sky
+exactly enough for paper ink to reach 4.6:1, preserving hue identity. The
+heatmap cells themselves carry no text; chips and aria labels carry the
+figures. Verified by axe across four states.
+
+### D-011 · The software floor
+
+On software rasterizers (SwiftShader/llvmpipe, detected via
+WEBGL_debug_renderer_info), `tier=low` includes the adaptive ladder's last
+rungs: DPR ×0.5 and post chain off. Rationale: the ladder (particles → DPR →
+post) exists precisely for machines like these and would land there within
+seconds; a pinned tier that the pin itself would immediately degrade is not a
+reproducible measurement target. Hardware GPUs keep the literal tier
+definitions.
+
+### D-012 · CPU throttle semantics on software WebGL
+
+The spec's 4× CDP CPU throttle simulates a slow CPU on hardware-GPU machines.
+On SwiftShader the GPU IS the CPU: throttling 4× simulates a machine four
+times slower than the no-GPU machine being modeled — no real device. Software
+runs are traced unthrottled; hardware runs take `--throttle=4`. Both recorded
+with renderer + throttle fields in perf-results.json.

@@ -258,18 +258,25 @@ export function Particles(): React.JSX.Element {
       // Fixed-step integration: large virtual-clock steps (capture harness,
       // tab-switch catch-up) substep at 60Hz so choreography never loses sim
       // time to a dt clamp (Loop C pass 1 finding). Cap keeps worst-case cost
-      // bounded; anything beyond is dropped, not compressed.
+      // bounded; anything beyond is dropped, not compressed. On the software
+      // floor the sim integrates at 30Hz — the advection pass is a real cost
+      // there and sub-frame smoothness is already display-bound.
+      const softwareFloor = s.softwareGL && s.tier === 'low';
       const H = 1 / 60;
+      const minStep = softwareFloor ? 1 / 32 : H;
       const now = virtualNow();
-      let acc = (now - lastMs.current) / 1000;
-      lastMs.current = now;
-      let sub = 0;
-      while (acc >= H && sub < 30) {
-        sim.step(gl, H);
-        acc -= H;
-        sub++;
+      const acc0 = (now - lastMs.current) / 1000;
+      if (acc0 >= minStep) {
+        let acc = acc0;
+        lastMs.current = now;
+        let sub = 0;
+        while (acc >= H && sub < 30) {
+          sim.step(gl, H);
+          acc -= H;
+          sub++;
+        }
+        if (acc > 0 && sub < 30) sim.step(gl, acc);
       }
-      if (acc > 0 && sub < 30) sim.step(gl, acc);
     }
 
     if (ru.uPositions) ru.uPositions.value = sim.texture;

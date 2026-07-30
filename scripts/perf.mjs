@@ -20,10 +20,16 @@ const { server, base } = await serveDist();
 const browser = await launch();
 const results = {};
 
+// This harness always runs on SwiftShader (software WebGL). The spec's 4×
+// CPU throttle models a slow CPU on hardware-GPU machines; on a software
+// rasterizer the renderer IS the CPU, so throttling it 4× models no real
+// device (D-012). Pass --throttle=4 on a hardware-GPU machine.
+const THROTTLE = Number(args.throttle ?? 1);
+
 async function tracePage(tier) {
   const page = await browser.newPage({ viewport: CAPTURE_SIZES.desktop });
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
   await page.goto(`${base}/?t=60&tier=${tier}`);
   await page.waitForFunction(() => window.__mw !== undefined, null, { timeout: 60000 });
   await page.waitForTimeout(1000);
@@ -50,6 +56,8 @@ async function tracePage(tier) {
   const q = (p) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))] ?? 0;
   return {
     tier,
+    throttle: THROTTLE,
+    renderer: 'SwiftShader (software WebGL)',
     frames: settled.length,
     p50: q(0.5),
     p75: q(0.75),

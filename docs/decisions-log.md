@@ -204,3 +204,15 @@ risk is low). One rendering bug found by eye: R3F draws transparent points
 after opaque meshes, so the wind strokes speckled OVER the vessel — fixed by
 placing the atmosphere at far-plane depth and letting it depth-test against
 the vessel (the scene's only depth writer).
+
+### D-018 · "Only news glows" — ramp redesign
+
+The temperature ramp is redesigned with a V-shaped luminance profile: the
+zero point is a quiet dark slate (#565A6E) that recedes into the night sky,
+and brightness rises toward both extremes — electric violet (#7D6BFF ← #5563E0)
+for losses, luminous gold (#FFD08A ← #D98E3A) for gains. Consequence: flat
+sectors stop reading as grey fog; the day's movers carry all the light. The
+warm/cool metaphor, the OKLab interpolation, the no-green/red rule, the
+CVD-safe blue/yellow axis, and the computed per-cell contrast switch (D-010,
+which re-derives ink per stop) all carry over. CSS tokens, favicon, heatmap,
+panels, vessel glaze and field all inherit from the single ramp source.

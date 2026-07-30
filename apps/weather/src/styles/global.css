@@ -5,11 +5,11 @@
   --paper: #f2eee4;
   --paper-2: #a9a498;
   --hairline: rgb(242 238 228 / 14%);
-  --warm-2: #ffb65c;
-  --warm-1: #e8a34a;
-  --neutral: #8e8b98;
-  --cool-1: #7a86e8;
-  --cool-2: #5e6ad2;
+  --warm-2: #ffd08a;
+  --warm-1: #d98e3a;
+  --neutral: #565a6e;
+  --cool-1: #5563e0;
+  --cool-2: #7d6bff;
   --font-display: 'Newsreader Variable', georgia, serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --glide: cubic-bezier(0.22, 1, 0.36, 1);

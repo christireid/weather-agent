@@ -48,7 +48,7 @@ This piece takes the metaphor literally and then signs a contract with it —
 | 🜁 wind strokes | sector momentum — every particle is drawn along its own velocity, bright head first: rising sectors stream **up-right**, falling **down-left** | |
 | 🌀 turbulence, stroke length | sector volatility — calm air is fine grain; a squall is combed into long ragged filaments | |
 | ✦ particle density & size | trading volume — thin morning air, thick panic | |
-| 🎨 color temperature | return since open — **amber** warmth for gains through parchment-grey to **blue-violet** cold for losses (deliberately not green/red) | |
+| 🎨 color temperature | return since open — luminous **gold** for gains, electric **violet** for losses, and a quiet dark slate at zero so only news glows (deliberately not green/red) | |
 | ✧ brief luminance pulses | volume spikes | |
 
 An effect that cannot name its data channel does not ship. The one-day storm you're watching

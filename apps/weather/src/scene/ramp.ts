@@ -5,20 +5,26 @@
  * 256×1 lookup texture for the shaders and sampled directly for the heatmap
  * (same ramp everywhere — the metaphor contract's color channel).
  *
- * Stops (t = 0 → 1 = strong negative → strong positive):
- *   0.00  #5E6AD2   strong negative (cool violet)
- *   0.25  #7A86E8   negative
- *   0.50  #8E8B98   zero (neutral parchment-grey)
- *   0.75  #E8A34A   positive
- *   1.00  #FFB65C   strong positive (warm amber)
+ * Stops (t = 0 → 1 = strong negative → strong positive), redesigned with a
+ * V-shaped luminance profile — ONLY NEWS GLOWS: the zero point is a quiet
+ * dark slate that recedes into the night sky, and brightness rises toward
+ * both extremes (electric violet for deep losses, luminous gold for strong
+ * gains). Hue travel violet → ultramarine → slate → copper → gold keeps the
+ * warm/cool contract and the CVD-safe blue/yellow axis (D-018).
+ *
+ *   0.00  #7D6BFF   strong negative (electric violet — luminous cold)
+ *   0.25  #5563E0   negative (deep ultramarine)
+ *   0.50  #565A6E   zero (quiet slate — recedes)
+ *   0.75  #D98E3A   positive (burnished copper)
+ *   1.00  #FFD08A   strong positive (luminous gold)
  */
 
 export const RAMP_STOPS: readonly [number, string][] = [
-  [0.0, '#5E6AD2'],
-  [0.25, '#7A86E8'],
-  [0.5, '#8E8B98'],
-  [0.75, '#E8A34A'],
-  [1.0, '#FFB65C'],
+  [0.0, '#7D6BFF'],
+  [0.25, '#5563E0'],
+  [0.5, '#565A6E'],
+  [0.75, '#D98E3A'],
+  [1.0, '#FFD08A'],
 ];
 
 /** Return-since-open that saturates the ramp ends (±1.6% — beyond clamps). */

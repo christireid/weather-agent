@@ -90,3 +90,34 @@ clamp(√(area/1.6M), 0.5, 1.25)`).
   the foil for the squall).
 
 Exit criteria met: 8 passes total, ≥3 minimum, final pass zero new findings.
+
+## Redesign round — "not generic enough" (reopened Loop B)
+
+Direction critique accepted: soft round sprites in colored bands is the default
+particle-demo look. Three passes to a distinctive hand:
+
+### Pass 9 — wind strokes (PROGRESS, new fail mode)
+
+Replaced round sprites with velocity-aligned capsule strokes: each particle is
+drawn along its own wind+turbulence vector, length ∝ local speed, comet-shaded
+so the bright head shows direction of travel in a STILL (momentum legibility
+up). Finding: the frame became woven fabric — strokes everywhere, negative
+space gone, night sky lost.
+
+### Pass 10 — restore the dark (PROGRESS)
+
+Stronger alpha compensation (∝ 1/(1+0.9·stretch)), deeper cloud-void floor,
+shorter strokes. Storm keeps the combed texture, calm returns to quiet grain —
+but the texture is FUR: the curl octaves are texel-frequency, so strokes
+disagree with their neighbors and no large-scale form emerges.
+
+### Pass 11 — coherent currents (EXIT for the redesign)
+
+The real fix was in the FLOW, not the sprite: dominant eddy frequency dropped
+~2× (storm adds energy, not frequency; per-particle noise-phase decorrelation
+reduced), cloud banks enlarged. Result: the storm core now forms a breaking
+wave — a luminous crest curling over the front line, streaming currents,
+honest voids — and the calm morning reads as slow drift. The picture has
+composition-scale structure that is entirely advected data. Verified: title
+glyphs and boring-grid formations damp strokes back to crisp grains
+(uStreakDamp), so choreography is unharmed.

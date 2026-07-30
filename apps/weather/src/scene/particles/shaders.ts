@@ -90,12 +90,13 @@ void main() {
   float th = 0.61 * abs(m);
   vec2 wind = vec2(cos(th), sin(th)) * (0.030 * m);
 
-  // Turbulence: volatility shrinks the eddies and feeds their energy. The
-  // storm-emphasis window leans on the same term so the squall's onset is
-  // felt building, not switched on.
-  float eddy = mix(3.0, 8.5, vol);
-  float turbGain = (0.010 + 0.140 * vol * vol) * (1.0 + 0.55 * uStormEmphasis * vol);
-  vec2 turb = curl(p * eddy + data.w * 6.2831, uFlowTime) * turbGain;
+  // Turbulence: volatility feeds eddy ENERGY more than frequency — the flow
+  // stays locally coherent (sweeping currents, not fur), storms just tear
+  // harder. The storm-emphasis window leans on the same term so the squall's
+  // onset is felt building, not switched on.
+  float eddy = mix(1.5, 4.2, vol);
+  float turbGain = (0.012 + 0.150 * vol * vol) * (1.0 + 0.55 * uStormEmphasis * vol);
+  vec2 turb = curl(p * eddy + data.w * 0.9, uFlowTime) * turbGain;
 
   // Depth layers drift at different rates — parallax gives the sky its depth.
   // The title dispersal rides the same flow, amplified — the letters are not
@@ -168,12 +169,16 @@ uniform vec3 uView;        // zoom, cx, cy
 uniform float uPointScale; // device pixels at zoom 1
 uniform float uZoomSizeCap; // limits zoom-driven sprite growth (software floor fill budget)
 uniform float uAlphaScale; // small-viewport compensation (fewer pixels per particle)
+uniform float uAspect;     // viewport w/h — field→screen direction correction
 uniform float uFlowTime;
 uniform float uTitleGlow;  // restrained lift while the wordmark holds
+uniform float uStreakDamp; // title/boring formations want crisp grains, not strokes
 uniform float uStormEmphasis; // density/brightness pulse around the macro shock
 varying float vTempT;
 varying float vAlpha;
 varying float vBright;
+varying vec2 vDir;     // screen-space streak direction (pointCoord frame)
+varying float vStretch; // 0 = round grain … ~3 = long wind stroke
 ${SECTOR_LOOKUP}
 ${SECTOR_BLEND}
 ${CURL_NOISE}
@@ -201,19 +206,43 @@ void main() {
   float hover = chB.y;
   float focusDim = chB.z;
 
+  // The wind made visible: each particle is drawn as a stroke along its own
+  // velocity (the same wind + turbulence the sim advects through), its length
+  // growing with local speed. Calm air is fine grain; a squall is combed into
+  // long ragged filaments. Direction+length are the momentum/volatility
+  // channels restated — no new data channel (D-014).
+  float m = chA.x;
+  float thW = 0.61 * abs(m);
+  vec2 wind = vec2(cos(thW), sin(thW)) * (0.030 * m);
+  float eddy = mix(1.5, 4.2, vol);
+  vec2 turb = curl(p * eddy + data.w * 0.9, uFlowTime)
+            * (0.012 + 0.150 * vol * vol) * (1.0 + 0.55 * uStormEmphasis * vol);
+  vec2 vel = wind + turb;
+  float speed = length(vel);
+  // Field space is unit-square over a non-square viewport: correct direction
+  // into screen space (pointCoord y runs DOWN, hence the flip).
+  vec2 dirS = speed > 1e-6 ? normalize(vec2(vel.x * uAspect, -vel.y)) : vec2(1.0, 0.0);
+  vDir = dirS;
+  vStretch = clamp(speed * 36.0, 0.0, 2.6) * (1.0 - uStreakDamp);
+  vStretch *= 0.55 + 0.75 * data.z; // near layers stroke longer — depth reads
+
   // Volume is density: size and opacity both breathe with it. Depth spreads
   // the layers apart — far grains are dust, near ones are soft luminous orbs.
   float depth = data.z;
   float size = uPointScale * (0.55 + 0.75 * volume) * (0.30 + 1.30 * depth) * min(uView.x, uZoomSizeCap);
-  vAlpha = (0.115 + 0.135 * volume) * (0.22 + 0.78 * depth);
+  // The sprite must be big enough to contain its stroke; the capsule shading
+  // keeps the visible ink thin, and alpha compensates for the longer body.
+  size *= 1.0 + 0.55 * vStretch;
+  vAlpha = (0.10 + 0.13 * volume) * (0.22 + 0.78 * depth);
+  vAlpha /= 1.0 + 0.9 * vStretch;
 
   // Density IS volume (§2.3): a per-particle gate thins calm regions to real
   // negative space, and a slow noise mask textures that same density into
   // cloud banks and voids instead of a uniform fill (see decisions log —
   // one channel, spatially textured; not a new visual channel).
-  float gate = step(fract(data.w * 7.0), 0.48 + 0.52 * volume);
-  float cloud = smoothstep(0.18, 0.82, vnoise(p * 2.7 + vec2(uFlowTime * 0.05, -uFlowTime * 0.03) + data.z * 1.7));
-  vAlpha *= gate * (0.30 + 0.70 * cloud) * uAlphaScale;
+  float gate = step(fract(data.w * 7.0), 0.42 + 0.58 * volume);
+  float cloud = smoothstep(0.14, 0.86, vnoise(p * 1.9 + vec2(uFlowTime * 0.05, -uFlowTime * 0.03) + data.z * 1.7));
+  vAlpha *= gate * (0.10 + 1.0 * cloud) * uAlphaScale;
 
   vAlpha *= mix(1.0, 0.22, focusDim); // non-focused sectors recede in Act III
 
@@ -240,16 +269,27 @@ uniform sampler2D uRamp;
 varying float vTempT;
 varying float vAlpha;
 varying float vBright;
+varying vec2 vDir;
+varying float vStretch;
 
 void main() {
-  // Soft round sprite, no texture fetch: quadratic falloff kills banding rings.
-  vec2 d = gl_PointCoord - 0.5;
-  float r2 = dot(d, d) * 4.0;
-  float disc = clamp(1.0 - r2, 0.0, 1.0);
+  // Wind stroke: rotate the sprite into its velocity frame and shade a soft
+  // capsule — stretched along the flow, thin across it. At vStretch 0 this
+  // degrades exactly to the round grain.
+  vec2 q = gl_PointCoord - 0.5;
+  vec2 r = vec2(dot(q, vDir), dot(q, vec2(-vDir.y, vDir.x)));
+  float ax = 1.0 + vStretch;          // along-flow radius
+  float ay = 1.0 / (1.0 + 0.55 * vStretch); // across-flow: strokes are thin
+  float d2 = (r.x * r.x) / (ax * ax) + (r.y * r.y) / (ay * ay);
+  float disc = clamp(1.0 - d2 * 4.0, 0.0, 1.0);
   float soft = disc * disc;
+  // Comet shading: the head (direction of travel) burns brighter than the
+  // tail, so a paused frame still shows WHICH WAY the sector is moving.
+  float head = 0.5 + 0.5 * clamp((r.x / max(ax * 0.5, 1e-4)), -1.0, 1.0);
+  float bright = vBright * mix(1.0, mix(0.62, 1.45, head), min(vStretch, 1.0));
   // The ramp texture is tagged sRGB, so sampling yields linear color already.
   vec3 col = texture2D(uRamp, vec2(vTempT, 0.5)).rgb;
-  gl_FragColor = vec4(col * vBright, vAlpha * soft);
+  gl_FragColor = vec4(col * bright, vAlpha * soft);
 }
 `;
 

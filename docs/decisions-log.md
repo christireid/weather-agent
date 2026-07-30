@@ -150,3 +150,12 @@ violations. Every trace runs alongside a blank-page control on the same host
 rAF was evaluated and rejected — it measures GPU-process queue-fill, not frame
 cost. Perf viewport is 1280×720 (capture dimensions exist for still
 comparability; the software compositor's window upscale is a fixed cost).
+
+### D-014 · Wind-stroke rendering
+
+Particles render as velocity-aligned capsule strokes (length ∝ |wind +
+turbulence|, comet head brighter than tail) instead of round sprites. This is
+a restatement of existing channels — direction/length are momentum and
+volatility made visible; the head/tail shading makes rising vs falling legible
+in a paused frame, strengthening §2.3 rather than adding a channel. Strokes
+damp to grains inside authored formations (title glyphs, boring grid).

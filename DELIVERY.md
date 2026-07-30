@@ -36,20 +36,22 @@ proven in Stage 0.
 
 > Scale per spec Part 12. Evidence cited by filename.
 
-**1. First-impression impact — 8.5**
-The title condensation → gust dispersal → field formation sequence
-(`loop-c/title-intro-sheet.png`) is an authored moment, not a fade-in; the storm
-hero (`loop-b/field-storm-high-desktop.png`) has poster structure: amber current,
-white shear line, cool squall mass, honest negative space. Held below 9+ because the
-mid-morning calm, while truthful, is a deliberately quiet frame — the one "flat
-moment" the 8 descriptor names.
+**1. First-impression impact — 9** *(re-scored after the wind-stroke redesign,
+Loop B passes 9–11)*
+The field no longer reads as a particle demo: every particle is a stroke drawn
+along its own wind, and at the storm the flow forms a breaking wave — a luminous
+crest curling over the front line (`loop-b/field-storm-high-desktop.png`) — while
+the calm morning is quiet combed drift. The title condensation → gust dispersal
+remains an authored moment. The look now has a recognizable hand (wind-map ×
+brushwork) rather than a familiar technique.
 
-**2. Metaphor legibility — 8**
-From the storm still alone: the 3–5 stormy sectors are locatable (cool, turbulent,
-dense bands), strong sectors nameable (warm bands), and the hover label + hairline
-constellation confirm regions. The six-word legend teaches the five channels; Boring
-Mode proves the reading. An uninstructed viewer still needs the legend for the
-volume/density channel — that is the 8, not the 10.
+**2. Metaphor legibility — 8.5** *(re-scored)*
+From the storm still alone: the 3–5 stormy sectors are locatable (cool, long-ragged
+strokes), strong sectors nameable (warm bands), and — new with the stroke renderer —
+*direction* is readable in a paused frame via the comet head/tail, closing the old
+"which way is it moving" gap. The six-word legend teaches the remaining channels;
+Boring Mode proves the reading. Volume/density still needs the legend — that keeps
+it under 10.
 
 **3. Motion craft — 8.5**
 Every sequence is authored and capture-verified: gather/hold/burst title with 400ms
@@ -113,7 +115,11 @@ trade-offs, four loop logs record real failures (including the ones that
 embarrassed: the sRGB lift, the sim-swap black screen). Monorepo scripts are the
 documentation.
 
-**Board: 8.5 · 8 · 8.5 · 8 · 8.5 · 9 · 9 · 8 · 8 · 8.5 — all ≥ 8. Gate passed, round 1.**
+**Board (round 2, after the wind-stroke redesign): 9 · 8.5 · 8.5 · 8 · 8.5 · 9 · 9 · 8 · 8 · 8.5 — all ≥ 8. Gate passed.**
+*(Round 1 scored 8.5/8 on axes 1–2 with round sprites; the redesign — Loop B
+passes 9–11, D-014 — was re-verified across formations, perf trace, smoke and
+axe before re-scoring. Frame budget re-confirmed with the stroke renderer:
+p75 16.7ms, zero frames beyond the vsync boundary bucket.)*
 
 ## 4 · Accessibility results (Loop D, final runs)
 

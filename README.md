@@ -11,9 +11,9 @@
 
 ![The storm at 2:20 PM — the macro shock breaks across four correlated sectors](docs/screenshots/loop-b/field-storm-high-desktop.png)
 
-*<sup>2:20 PM. The macro shock lands: four correlated sectors turn cool and turbulent while an amber
-current of the sectors still rallying pours through the foreground. Every color, every eddy, every
-grain of density is data.</sup>*
+*<sup>2:20 PM. The macro shock lands: a luminous crest breaks over the front line as four correlated
+sectors turn cool and turbulent, while the sectors still rallying burn amber above and below.
+Every stroke is a particle drawn along its own wind; every color, every eddy, every void is data.</sup>*
 
 <br/>
 
@@ -45,8 +45,8 @@ This piece takes the metaphor literally and then signs a contract with it —
 
 | you see | it is | nothing else |
 | --- | --- | --- |
-| 🜁 wind direction & flow | sector momentum — rising sectors stream **up-right**, falling **down-left** | |
-| 🌀 turbulence, eddy scale | sector volatility — calm air goes ragged as vol clusters | |
+| 🜁 wind strokes | sector momentum — every particle is drawn along its own velocity, bright head first: rising sectors stream **up-right**, falling **down-left** | |
+| 🌀 turbulence, stroke length | sector volatility — calm air is fine grain; a squall is combed into long ragged filaments | |
 | ✦ particle density & size | trading volume — thin morning air, thick panic | |
 | 🎨 color temperature | return since open — **amber** warmth for gains through parchment-grey to **blue-violet** cold for losses (deliberately not green/red) | |
 | ✧ brief luminance pulses | volume spikes | |
@@ -137,13 +137,17 @@ At 4:00 PM the field freezes and the day typesets itself. **Replay** runs the sa
 Voronoi sky-regions and baked into a 64×64 **air texture** on the CPU — one bilinear fetch
 replaces an 11-site loop in every shader. The **simulation pass** (FBO ping-pong, 448²≈200k
 particles high tier / 245²≈60k low) advects positions through wind (momentum) plus
-divergence-free curl noise whose eddy scale and energy come from volatility, with a breath
-of diffusion so the flow never ropes into streaks. The **render pass** draws soft additive
-sprites — size and gate from volume, color from the OKLab temperature ramp LUT, depth-layered
-parallax for structure — under a strict post budget: bloom (high threshold), ACES, 3% grain,
-vignette. Scrubs re-seed positions from `hash(seed, minute)` and warm up 90 fixed steps, so
-minute *t* is the same sky no matter how you got there. The whole day runs on one injected
-virtual clock — no wall-clock reads anywhere a capture could see.
+divergence-free curl noise whose *energy* — not frequency — comes from volatility, so storms
+tear harder while the currents stay coherent enough to read at composition scale. The
+**render pass** draws each particle as a **wind stroke**: a capsule stretched along its own
+velocity, length growing with local speed, comet-shaded so the bright head shows which way
+the sector is moving even in a paused frame — calm air is fine grain, a squall is combed into
+long ragged filaments. Size and gate come from volume, color from the OKLab temperature ramp
+LUT, depth-layered parallax from three drift layers — all under a strict post budget: bloom
+(high threshold), ACES, 3% grain, vignette. Scrubs re-seed positions from
+`hash(seed, minute)` and warm up 90 fixed steps, so minute *t* is the same sky no matter how
+you got there. The whole day runs on one injected virtual clock — no wall-clock reads
+anywhere a capture could see.
 
 **Determinism is the test harness:** every state is a URL, every capture steps the clock via
 `window.__mw`, and the look-dev/motion/a11y/perf loops in `docs/` judge screenshots and

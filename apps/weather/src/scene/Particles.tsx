@@ -96,6 +96,8 @@ export function Particles(): React.JSX.Element {
           uPointScale: { value: 3 },
           uZoomSizeCap: { value: 10 },
           uAlphaScale: { value: 1 },
+          uAspect: { value: 1.6 },
+          uStreakDamp: { value: 0 },
           uFlowTime: { value: 0 },
           uTitleGlow: { value: 0 },
           uStormEmphasis: { value: 0 },
@@ -250,6 +252,12 @@ export function Particles(): React.JSX.Element {
     if (su.uCheapNoise) su.uCheapNoise.value = softwareFloor ? 1 : 0;
     // Zoomed sprites quadruple fill; the software floor caps their growth.
     if (ru.uZoomSizeCap) ru.uZoomSizeCap.value = softwareFloor ? 1.3 : 10;
+    if (ru.uAspect) ru.uAspect.value = state.size.width / Math.max(1, state.size.height);
+    // Formations (title glyphs, boring grid) want crisp grains, not strokes.
+    if (ru.uStreakDamp) {
+      const titleMix = (su2.uTitleMix?.value as number) ?? 0;
+      ru.uStreakDamp.value = Math.min(1, Math.max(titleMix, boring.mix));
+    }
 
     // Fully settled in Boring Mode → the DOM owns the view; skip sim work.
     if (s.mode === 'boring' && boring.mix >= 1) {

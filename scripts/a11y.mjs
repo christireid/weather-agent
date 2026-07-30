@@ -113,6 +113,10 @@ for (const target of scanTargets) {
   const page2 = await browser.newPage({ viewport: CAPTURE_SIZES.desktop, reducedMotion: 'reduce' });
   await page2.goto(`${base}/?t=290&tier=low`);
   await page2.waitForFunction(() => window.__mw !== undefined, null, { timeout: 30000 });
+  // Settle one-time events (webfont swap, glyph-texture build) so the
+  // stillness assertion tests motion, not load timing.
+  await page2.waitForFunction(() => document.fonts.status === 'loaded', null, { timeout: 15000 }).catch(() => {});
+  await page2.waitForFunction(() => window.__mwGlyphsReady === true, null, { timeout: 15000 }).catch(() => {});
   await page2.waitForTimeout(3000);
   const shot1 = await page2.screenshot();
   await page2.waitForTimeout(1500);

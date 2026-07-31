@@ -216,3 +216,30 @@ warm/cool metaphor, the OKLab interpolation, the no-green/red rule, the
 CVD-safe blue/yellow axis, and the computed per-cell contrast switch (D-010,
 which re-derives ink per stop) all carry over. CSS tokens, favicon, heatmap,
 panels, vessel glaze and field all inherit from the single ramp source.
+
+### D-019 · High-chroma ramp + hue-preserving accumulation
+
+Three coupled changes make the palette carry the piece:
+
+1. **Seven stops, wider hue arc.** violet `#9B4DFF` → indigo `#5B4BF5` →
+   azure `#2F49C9` → slate `#4A4E63` → ember `#E4611F` → amber `#FF9E1F` →
+   gold `#FFE566`. The extra flanking stops let chroma climb steeply at the
+   extremes without the ramp ever crossing the warm/cool divide.
+2. **Hue-preserving accumulation.** Additive blending drags dense regions to
+   white — bleaching precisely the sectors that moved most. The sprite shader
+   now boosts saturation and glow by `chroma = |tempT − 0.5|·2`, which IS the
+   return magnitude: the biggest movers burn hardest *in their own hue*
+   instead of washing out. A restatement of the temperature channel, not a
+   new one.
+3. **Bloom retuned** (threshold 0.72 → 0.58, intensity 0.55 → 0.85) so the
+   gold and violet cores actually bleed light, plus deeper cloud voids
+   (floor 0.10 → 0.04, threshold 0.14 → 0.22) so that light reads as weather
+   against real night rather than as wallpaper.
+
+### D-020 · HUD scrims
+
+With the field free to burn gold or violet anywhere, paper text can no longer
+rely on a dark canvas underneath. Soft top/bottom gradient scrims
+(`.hud::before`, `.dock::before`, plus an opaque legend chip) guarantee the
+§9.5 ≥4.5:1 floor for every label over every scene state, without drawing a
+visible bar.

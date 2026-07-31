@@ -144,3 +144,36 @@ atmosphere moved to far-plane depth with depth testing; grain 3% → 1.8%.
 Result: turned porcelain wearing the day — amber morning swell, ribbed
 midday, the 2:20 choke, pale flat close. Storm/field states verified
 unaffected.
+
+### Pass 14 — chroma (the palette carries the piece)
+
+Direction critique: "more eye-catching." The V-luminance ramp had fixed the
+*structure* (D-018) but the colors themselves were still polite — a pale tan
+gold and a muted ultramarine. Three coupled fixes (D-019):
+
+- **Seven stops, wider arc** — violet → indigo → azure → slate → ember →
+  amber → gold, chroma climbing steeply toward both extremes.
+- **Hue-preserving accumulation** — the additive pass was bleaching the
+  densest (= biggest-moving) regions toward white. Saturation and glow now
+  scale with distance-from-neutral, so movers burn in their own hue.
+- **Bloom + voids retuned** — threshold 0.72→0.58 / intensity 0.55→0.85 so
+  cores bleed light; cloud floor 0.10→0.04 and threshold 0.14→0.22 so real
+  night survives between the currents.
+
+Findings from the re-capture: the brighter field broke paper-text contrast
+over gold regions (HUD figures, footer, legend chip) — fixed with top/bottom
+gradient scrims and an opaque legend chip (D-020), not by dimming the art.
+Result: the storm reads as aurora over a night sky, the 10:45 calm as a true
+nocturne, and the heatmap's 2:20 break as a hard violet column. Verified
+across both tiers and sizes; axe clean; smoke green.
+
+### GIF pipeline (README media)
+
+Encoding was tuned for safety, not for the work: low tier, 128-color rgb444,
+jump-cut loops. Now: title/toggle capture at the HIGH tier (200k strokes —
+captures are clock-stepped, so SwiftShader cost is irrelevant); a 256-color
+**rgb565** palette quantized from three sampled frames (start/mid/late) so the
+whole arc is represented without per-frame flicker; per-frame delays with a
+~1s hold on the final frame and mid-sequence dwells at the moments that
+deserve them. Dense stroke sequences render at 720px to keep GIF entropy
+(and README weight) sane — 21.9 MB total across five.

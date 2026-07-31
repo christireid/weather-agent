@@ -5,11 +5,11 @@
   --paper: #f2eee4;
   --paper-2: #a9a498;
   --hairline: rgb(242 238 228 / 14%);
-  --warm-2: #ffd08a;
-  --warm-1: #d98e3a;
-  --neutral: #565a6e;
-  --cool-1: #5563e0;
-  --cool-2: #7d6bff;
+  --warm-2: #ffe566;
+  --warm-1: #ff9e1f;
+  --neutral: #4a4e63;
+  --cool-1: #2f49c9;
+  --cool-2: #9b4dff;
   --font-display: 'Newsreader Variable', georgia, serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --glide: cubic-bezier(0.22, 1, 0.36, 1);
@@ -61,7 +61,7 @@ body {
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--paper-2);
-  z-index: 10;
+  z-index: 21;
 }
 
 .footer a {

@@ -240,9 +240,12 @@ void main() {
   // negative space, and a slow noise mask textures that same density into
   // cloud banks and voids instead of a uniform fill (see decisions log —
   // one channel, spatially textured; not a new visual channel).
-  float gate = step(fract(data.w * 7.0), 0.42 + 0.58 * volume);
-  float cloud = smoothstep(0.14, 0.86, vnoise(p * 1.9 + vec2(uFlowTime * 0.05, -uFlowTime * 0.03) + data.z * 1.7));
-  vAlpha *= gate * (0.10 + 1.0 * cloud) * uAlphaScale;
+  // Voids matter more now that the palette burns: a higher cloud floor and a
+  // deeper trough keep real night between the currents, so the light lands
+  // as weather rather than wallpaper.
+  float gate = step(fract(data.w * 7.0), 0.38 + 0.62 * volume);
+  float cloud = smoothstep(0.22, 0.88, vnoise(p * 1.9 + vec2(uFlowTime * 0.05, -uFlowTime * 0.03) + data.z * 1.7));
+  vAlpha *= gate * (0.04 + 1.06 * cloud) * uAlphaScale;
 
   vAlpha *= mix(1.0, 0.22, focusDim); // non-focused sectors recede in Act III
 
@@ -291,6 +294,17 @@ void main() {
   float bright = vBright * mix(1.0, mix(0.62, 1.45, head), min(vStretch, 1.0));
   // The ramp texture is tagged sRGB, so sampling yields linear color already.
   vec3 col = texture2D(uRamp, vec2(vTempT, 0.5)).rgb;
+
+  // Hue-preserving accumulation (D-019). Additive blending drags dense
+  // regions toward white, which bleaches exactly the sectors that moved
+  // most. Chroma = distance from the neutral stop = |return|, so boosting
+  // saturation and glow with it both fights the bleach AND restates the
+  // temperature channel: the biggest movers burn hardest in their own hue.
+  float chroma = abs(vTempT - 0.5) * 2.0;
+  float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+  col = max(vec3(0.0), mix(vec3(lum), col, 1.0 + 0.85 * chroma));
+  bright *= 1.0 + 0.55 * chroma * chroma;
+
   gl_FragColor = vec4(col * bright, vAlpha * soft);
 }
 `;

@@ -12,19 +12,27 @@
  * gains). Hue travel violet → ultramarine → slate → copper → gold keeps the
  * warm/cool contract and the CVD-safe blue/yellow axis (D-018).
  *
- *   0.00  #7D6BFF   strong negative (electric violet — luminous cold)
- *   0.25  #5563E0   negative (deep ultramarine)
- *   0.50  #565A6E   zero (quiet slate — recedes)
- *   0.75  #D98E3A   positive (burnished copper)
- *   1.00  #FFD08A   strong positive (luminous gold)
+ * Seven stops rather than five: the extra stops on each flank let the ramp
+ * travel a much wider hue arc at high chroma without ever crossing the
+ * warm/cool divide — the extremes scream, the middle stays quiet (D-019).
+ *
+ *   0.00  #9B4DFF   extreme negative (vivid violet — the panic note)
+ *   0.16  #5B4BF5   strong negative (electric indigo)
+ *   0.34  #2F49C9   negative (deep azure)
+ *   0.50  #4A4E63   zero (quiet slate — recedes into the night)
+ *   0.66  #E4611F   positive (ember orange)
+ *   0.84  #FF9E1F   strong positive (molten amber)
+ *   1.00  #FFE566   extreme positive (incandescent gold)
  */
 
 export const RAMP_STOPS: readonly [number, string][] = [
-  [0.0, '#7D6BFF'],
-  [0.25, '#5563E0'],
-  [0.5, '#565A6E'],
-  [0.75, '#D98E3A'],
-  [1.0, '#FFD08A'],
+  [0.0, '#9B4DFF'],
+  [0.16, '#5B4BF5'],
+  [0.34, '#2F49C9'],
+  [0.5, '#4A4E63'],
+  [0.66, '#E4611F'],
+  [0.84, '#FF9E1F'],
+  [1.0, '#FFE566'],
 ];
 
 /** Return-since-open that saturates the ramp ends (±1.6% — beyond clamps). */

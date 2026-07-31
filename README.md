@@ -48,7 +48,7 @@ This piece takes the metaphor literally and then signs a contract with it —
 | 🜁 wind strokes | sector momentum — every particle is drawn along its own velocity, bright head first: rising sectors stream **up-right**, falling **down-left** | |
 | 🌀 turbulence, stroke length | sector volatility — calm air is fine grain; a squall is combed into long ragged filaments | |
 | ✦ particle density & size | trading volume — thin morning air, thick panic | |
-| 🎨 color temperature | return since open — luminous **gold** for gains, electric **violet** for losses, and a quiet dark slate at zero so only news glows (deliberately not green/red) | |
+| 🎨 color temperature | return since open — incandescent **gold** through ember for gains, electric **violet** through azure for losses, and a quiet dark slate at zero, so **only news glows** (deliberately not green/red) | |
 | ✧ brief luminance pulses | volume spikes | |
 
 An effect that cannot name its data channel does not ship. The one-day storm you're watching
@@ -145,9 +145,12 @@ tear harder while the currents stay coherent enough to read at composition scale
 **render pass** draws each particle as a **wind stroke**: a capsule stretched along its own
 velocity, length growing with local speed, comet-shaded so the bright head shows which way
 the sector is moving even in a paused frame — calm air is fine grain, a squall is combed into
-long ragged filaments. Size and gate come from volume, color from the OKLab temperature ramp
-LUT, depth-layered parallax from three drift layers — all under a strict post budget: bloom
-(high threshold), ACES, fine grain, vignette. Scrubs re-seed positions from
+long ragged filaments. Size and gate come from volume, color from a seven-stop OKLab
+temperature ramp whose luminance is **V-shaped** — flat sectors sink into the night while the
+day's movers carry all the light. Because additive blending bleaches dense regions toward
+white, the shader boosts saturation and glow by each particle's *distance from neutral*, so the
+biggest movers burn hardest **in their own hue** instead of washing out. All under a strict
+post budget: bloom, ACES, fine grain, vignette. Scrubs re-seed positions from
 `hash(seed, minute)` and warm up 90 fixed steps, so minute *t* is the same sky no matter how
 you got there. The whole day runs on one injected virtual clock — no wall-clock reads
 anywhere a capture could see.
